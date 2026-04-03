@@ -1,4 +1,3 @@
-package org.example
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.window.Window
@@ -18,3 +17,4 @@ fun main() = application {
         App()
     }
 }
+
