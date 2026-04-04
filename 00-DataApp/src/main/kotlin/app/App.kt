@@ -15,7 +15,8 @@ import ui.MenuScreen
 enum class Screen {
     MENU,
     ACTIVITY1,
-    CLIENTI
+    CLIENTI,
+    MATERIALE
 }
 
 @Composable
@@ -35,6 +36,7 @@ fun App() {
             Screen.MENU -> MenuScreen(
                 onActivity1 = { currentScreen = Screen.ACTIVITY1 },
                 onClienti = { currentScreen = Screen.CLIENTI },
+                onMateriale = { currentScreen = Screen.MATERIALE }
             )
 
             Screen.ACTIVITY1 -> Activity1Screen(
@@ -44,6 +46,10 @@ fun App() {
             Screen.CLIENTI -> ClienteActivity(
                 onBackToMenu = { currentScreen = Screen.MENU },
                 onAddCliente = {nome, cognome, tipologia -> DatabaseHelper.insertCliente(nome, cognome, tipologia) }
+            )
+
+            Screen.MATERIALE -> MaterialeAcitvity(
+                onBackToMenu = { currentScreen = Screen.MENU },
             )
         }
     }

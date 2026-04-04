@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 
 fun MenuScreen(onActivity1: () -> Unit,
-               onClienti: () -> Unit) {
+               onClienti: () -> Unit,
+               onMateriale: () -> Unit){
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -44,6 +45,10 @@ fun MenuScreen(onActivity1: () -> Unit,
 
             Button(onClick = onClienti, modifier = Modifier.fillMaxWidth()) {
                 Text("Clienti")
+            }
+
+            Button(onClick = onClienti, modifier = Modifier.fillMaxWidth()) {
+                Text("Materiale")
             }
 
         }
