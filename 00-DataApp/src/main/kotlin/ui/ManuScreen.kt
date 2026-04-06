@@ -47,7 +47,7 @@ fun MenuScreen(onActivity1: () -> Unit,
                 Text("Clienti")
             }
 
-            Button(onClick = onClienti, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = onMateriale, modifier = Modifier.fillMaxWidth()) {
                 Text("Materiale")
             }
 

@@ -1,5 +1,7 @@
 package ui
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -12,8 +14,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -30,6 +36,7 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import database.DatabaseHelper
 import dataclass.Cliente
+import dataclass.Materiale
 import printdata.generaPdf
 
 @Composable
@@ -45,6 +52,13 @@ fun Activity1Screen(onBack: () -> Unit) {
 
     var totaleOre by remember { mutableStateOf(0.0) }
 
+    // -----------------------------------------
+    // Materiale - Rapportino
+    // -----------------------------------------
+    var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
+    var selectedMateriale by remember { mutableStateOf<Materiale?>(null) }
+    var quantita by remember { mutableStateOf("") }
+    var materialiUsati by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
 
     LaunchedEffect(Unit) {
         clienti = DatabaseHelper.getAllClienti()
@@ -93,8 +107,34 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Text(
                     text = "%.2f".format(totaleOre),
                     fontSize = 18.sp,
-                    color = Color(0xFF4CAF50) // verde elegante
+                    color = Color(0xFF4CAF50)
                 )
+
+                Spacer(Modifier.height(30.dp))
+
+                // -----------------------------------------
+                // RIEPILOGO MATERIALE USATO
+                // -----------------------------------------
+                Text("Materiali utilizzati:", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .border(1.dp, Color.LightGray)
+                ) {
+                    items(materialiUsati) { (mat, qty) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(6.dp)
+                        ) {
+                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f))
+                            Text("x $qty", modifier = Modifier.weight(0.3f))
+                        }
+                    }
+                }
             }
 
             // DIVIDER
@@ -117,26 +157,95 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Text("Seleziona Cliente", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
-                Button(
-                    onClick = { expanded = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Scegli cliente")
-                }
+                // ---------------------------
+                // DROPDOWN CLIENTI (fix visuale)
+                // ---------------------------
+                Box {
+                    Button(
+                        onClick = { expanded = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Scegli cliente")
+                    }
 
-                androidx.compose.material.DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    clienti.forEach { cliente ->
-                        androidx.compose.material.DropdownMenuItem(onClick = {
-                            clienteSelezionato = cliente
-                            expanded = false
-                            totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
-                        }) {
-                            Text("${cliente.fullName} - ${cliente.tipologia}")
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        clienti.forEach { cliente ->
+                            DropdownMenuItem(onClick = {
+                                clienteSelezionato = cliente
+                                expanded = false
+                                totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
+                            }) {
+                                Text("${cliente.fullName} - ${cliente.tipologia}")
+                            }
                         }
                     }
+                }
+
+                Spacer(Modifier.height(40.dp))
+
+                // -----------------------------------------
+                // SELEZIONE MATERIALE (TABELLA)
+                // -----------------------------------------
+                Text("Materiale utilizzato", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .border(1.dp, Color.Gray)
+                ) {
+                    items(listaMateriali) { materiale ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .border(
+                                    1.dp,
+                                    if (selectedMateriale?.id == materiale.id) Color.Blue else Color.LightGray
+                                )
+                                .padding(8.dp)
+                                .clickable {
+                                    selectedMateriale = materiale
+                                }
+                        ) {
+                            Text(materiale.marca, modifier = Modifier.weight(1f))
+                            Text(materiale.modello, modifier = Modifier.weight(1f))
+                            Text(materiale.codice, modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Quantità
+                TextField(
+                    value = quantita,
+                    onValueChange = { quantita = it },
+                    label = { Text("Quantità", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.Transparent
+                    ),
+                    singleLine = true,
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Aggiungi materiale al rapportino
+                Button(
+                    onClick = {
+                        if (selectedMateriale != null && quantita.isNotBlank()) {
+                            materialiUsati = materialiUsati + (selectedMateriale!! to quantita.toDouble())
+                            quantita = ""
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Aggiungi materiale")
                 }
             }
 
@@ -159,7 +268,6 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Text("Inserisci Nome", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
-                // Inserimento nome
                 TextField(
                     value = nome,
                     onValueChange = { nome = it },
@@ -173,7 +281,6 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(16.dp))
 
-                // Inserimento ore lavoro
                 Text("Ore Lavoro", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
@@ -190,7 +297,6 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(16.dp))
 
-                // Visualizzazione cliente
                 Text("Cliente", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
@@ -208,8 +314,6 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(40.dp))
 
-
-                // Visualizzazione Tipologia Lavoro
                 Text("Cliente", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
@@ -227,40 +331,43 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(40.dp))
 
-
-                // Salva Nel DB
+                // -----------------------------------------
+                // Salva Rapportino + Materiali
+                // -----------------------------------------
                 Button(onClick = {
-                    if (clienteSelezionato?.fullName?.isNotBlank() == true && nome.isNotBlank() && oreLavoro.isNotBlank()) {
+                    if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank()) {
+
+                        // 1) Salvo il rapportino
                         DatabaseHelper.insertRapportino(
                             nome = nome,
                             ore = oreLavoro.toDouble(),
                             cliente = clienteSelezionato!!.fullName,
                             tipologia = clienteSelezionato!!.tipologia
                         )
+
+                        // 2) Recupero ID ultimo rapportino
+                        val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                        // 3) Salvo materiali usati
+                        materialiUsati.forEach { (mat, qty) ->
+                            DatabaseHelper.insertRapportinoMateriale(
+                                idRapportino,
+                                mat.id!!,
+                                qty
+                            )
+                        }
+
                         message = "Rapportino salvato!"
                         nome = ""
                         oreLavoro = ""
                         clienteSelezionato = null
+                        materialiUsati = emptyList()
+
                     } else {
                         message = "Compila tutti i campi!"
                     }
                 }) {
                     Text("Salva nel database")
-                }
-
-                // PDF
-                Button(onClick = {
-                    if (clienteSelezionato?.fullName?.isNotBlank() == true && nome.isNotBlank() && oreLavoro.isNotBlank()) {
-                        DatabaseHelper.insertRapportino(
-                            nome = nome,
-                            ore = oreLavoro.toDouble(),
-                            cliente = clienteSelezionato!!.fullName,
-                            tipologia = clienteSelezionato!!.tipologia
-                        )
-                        generaPdf("$clienteSelezionato - $nome", oreLavoro.toDouble())
-                    }
-                }) {
-                    Text("Salva e genera PDF")
                 }
 
                 if (message.isNotEmpty()) {

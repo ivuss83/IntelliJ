@@ -1,6 +1,7 @@
 package database
 
 import dataclass.Cliente
+import dataclass.Materiale
 import java.sql.Connection
 import java.sql.DriverManager
 
@@ -11,6 +12,8 @@ object DatabaseHelper {
     private fun connect(): Connection {
         return DriverManager.getConnection("jdbc:sqlite:$DB_PATH")
     }
+
+    /* RAPPORTINO */
 
     // Creo Tabella Rapportino se necessario
     fun createRapportinoTableIfNeeded() {
@@ -45,6 +48,8 @@ object DatabaseHelper {
             }
         }
     }
+
+    /* CLIENTE */
 
     // Creo Tabella clienti se necesasrio
     fun createClientiTableIfNeeded() {
@@ -100,7 +105,7 @@ object DatabaseHelper {
     }
 
 
-    // Riepilogo totale cliente
+    // Riepilogo totale ore cliente
     fun getTotaleOreCliente(cliente: String): Double {
         val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE cliente = ?"
         var totale = 0.0
@@ -116,5 +121,197 @@ object DatabaseHelper {
         }
 
         return totale
+    }
+
+    /* MATERIALE */
+
+    // Creo Tabella Materiale se necesasrio
+    fun createMaterialeTableIfNeeded() {
+        val sql = """
+            CREATE TABLE IF NOT EXISTS Materiale (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            marca TEXT,
+            modello TEXT,
+            codice TEXT,
+            prezzo Real
+);
+        """.trimIndent()
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.execute(sql)
+            }
+        }
+    }
+
+    // Insert Materiale
+    fun insertMateriale(marca: String, modello: String, codice: String, prezzo: Double) {
+        val sql = "INSERT INTO Materiale(marca, modello, codice, prezzo) VALUES(?, ?, ?, ?)"
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { pstmt ->
+                pstmt.setString(1, marca)
+                pstmt.setString(2, modello)
+                pstmt.setString(3, codice)
+                pstmt.setDouble(4, prezzo)
+                pstmt.executeUpdate()
+            }
+        }
+    }
+
+    // Select Materiale
+    fun getAllMateriale(): List<Materiale> {
+        val materiali = mutableListOf<Materiale>()
+        val sql = "SELECT * FROM Materiale"
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                val rs = stmt.executeQuery(sql)
+                while (rs.next()) {
+                    materiali.add(
+                        Materiale(
+                            id = rs.getInt("id"),
+                            marca = rs.getString("marca"),
+                            modello = rs.getString("modello"),
+                            codice = rs.getString("codice"),
+                            prezzo = rs.getDouble("prezzo")
+                        )
+                    )
+                }
+            }
+        }
+
+        return materiali
+    }
+
+    // Update Materiale
+    fun updateMateriale(id: Int, marca: String, modello: String, codice: String, prezzo: Double) {
+        val sql = """
+        UPDATE Materiale 
+        SET marca = ?, modello = ?, codice = ?, prezzo = ?
+        WHERE id = ?
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, marca)
+                stmt.setString(2, modello)
+                stmt.setString(3, codice)
+                stmt.setDouble(4, prezzo)
+                stmt.setInt(5, id)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    // Delete Materiale
+    fun deleteMateriale(id: Int) {
+        val sql = "DELETE FROM Materiale WHERE id = ?"
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, id)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    /* Rapportino - Materiale */
+    fun createRapportinoMaterialeTableIfNeeded() {
+        val sql = """
+        CREATE TABLE IF NOT EXISTS RapportinoMateriale (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rapportinoId INTEGER NOT NULL,
+            materialeId INTEGER NOT NULL,
+            quantita REAL NOT NULL,
+            FOREIGN KEY (rapportinoId) REFERENCES Rapportino(id),
+            FOREIGN KEY (materialeId) REFERENCES Materiale(id)
+        );
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.execute(sql)
+            }
+        }
+    }
+
+    // Inseri Rapportino-Materiale
+    fun insertRapportinoMateriale(rapportinoId: Int, materialeId: Int, quantita: Double) {
+        val sql = "INSERT INTO RapportinoMateriale (rapportinoId, materialeId, quantita) VALUES (?, ?, ?)"
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, rapportinoId)
+                stmt.setInt(2, materialeId)
+                stmt.setDouble(3, quantita)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    // Select Materiale utilizzato nel Rapportino
+    fun getMaterialiForRapportino(rapportinoId: Int): List<Pair<Materiale, Double>> {
+        val result = mutableListOf<Pair<Materiale, Double>>()
+
+        val sql = """
+        SELECT m.*, rm.quantita
+        FROM RapportinoMateriale rm
+        JOIN Materiale m ON m.id = rm.materialeId
+        WHERE rm.rapportinoId = ?
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, rapportinoId)
+                val rs = stmt.executeQuery()
+                while (rs.next()) {
+                    val materiale = Materiale(
+                        id = rs.getInt("id"),
+                        marca = rs.getString("marca"),
+                        modello = rs.getString("modello"),
+                        codice = rs.getString("codice"),
+                        prezzo = rs.getDouble("prezzo")
+                    )
+                    val quantita = rs.getDouble("quantita")
+                    result.add(materiale to quantita)
+                }
+            }
+        }
+
+        return result
+    }
+
+    // Costo totale MAteriali nel Rapportino
+    fun getTotaleMaterialiRapportino(rapportinoId: Int): Double {
+        val sql = """
+        SELECT SUM(m.prezzo * rm.quantita) AS totale
+        FROM RapportinoMateriale rm
+        JOIN Materiale m ON m.id = rm.materialeId
+        WHERE rm.rapportinoId = ?
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, rapportinoId)
+                val rs = stmt.executeQuery()
+                return rs.getDouble("totale")
+            }
+        }
+    }
+
+    // Recupero ID ultimo rapportino inserito
+    fun getLastRapportinoId(): Int {
+        val sql = "SELECT id FROM Rapportino ORDER BY id DESC LIMIT 1"
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                val rs = stmt.executeQuery(sql)
+                if (rs.next()) {
+                    return rs.getInt("id")
+                }
+            }
+        }
+        return -1 // in caso non ci siano rapportini
     }
 }

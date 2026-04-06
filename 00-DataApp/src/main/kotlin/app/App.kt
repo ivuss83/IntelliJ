@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import database.DatabaseHelper
 import ui.Activity1Screen
 import ui.ClienteActivity
+import ui.MaterialeActivity
 import ui.MenuScreen
 
 enum class Screen {
@@ -26,6 +27,8 @@ fun App() {
     LaunchedEffect(Unit) {
         DatabaseHelper.createRapportinoTableIfNeeded()
         DatabaseHelper.createClientiTableIfNeeded()
+        DatabaseHelper.createMaterialeTableIfNeeded()
+        DatabaseHelper.createRapportinoMaterialeTableIfNeeded()
     }
 
     var currentScreen by remember { mutableStateOf(Screen.MENU) }
@@ -48,7 +51,7 @@ fun App() {
                 onAddCliente = {nome, cognome, tipologia -> DatabaseHelper.insertCliente(nome, cognome, tipologia) }
             )
 
-            Screen.MATERIALE -> MaterialeAcitvity(
+            Screen.MATERIALE -> MaterialeActivity(
                 onBackToMenu = { currentScreen = Screen.MENU },
             )
         }
