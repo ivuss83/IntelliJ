@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
 import database.DatabaseHelper
 import ui.Activity1Screen
 import ui.ClienteActivity
@@ -43,7 +45,7 @@ fun App() {
             )
 
             Screen.ACTIVITY1 -> Activity1Screen(
-                onBack = { currentScreen = Screen.MENU }
+                onBack = { currentScreen = Screen.MENU },
             )
 
             Screen.CLIENTI -> ClienteActivity(
