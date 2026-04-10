@@ -86,7 +86,7 @@ object DatabaseHelper {
     // Select Cliente + Tipologia Lavoro
     fun getAllClienti(): List<Cliente> {
         val clienti = mutableListOf<Cliente>()
-        val sql = "SELECT nome || ' ' || cognome AS fullName, tipologia FROM clienti"
+        val sql = "SELECT id, nome || ' ' || cognome AS fullName, tipologia FROM clienti"
 
         connect().use { conn ->
             conn.createStatement().use { stmt ->
@@ -94,6 +94,7 @@ object DatabaseHelper {
                 while (rs.next()) {
                     clienti.add(
                         Cliente(
+                            id = rs.getInt("id"),
                             fullName = rs.getString("fullName"),
                             tipologia = rs.getString("tipologia")
                         )

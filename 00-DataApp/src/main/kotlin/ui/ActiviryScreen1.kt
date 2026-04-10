@@ -20,6 +20,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -52,6 +53,8 @@ fun Activity1Screen(onBack: () -> Unit) {
 
     var totaleOre by remember { mutableStateOf(0.0) }
 
+    var searchText by remember { mutableStateOf("") }
+
     // -----------------------------------------
     // Materiale - Rapportino
     // -----------------------------------------
@@ -76,115 +79,70 @@ fun Activity1Screen(onBack: () -> Unit) {
         ) {
 
             // ---------------------------
-            // COLONNA DESTRA: RIEPILOGO CLIENTI
+            // COLONNA SINISTRA: CLIENTI (TABELLA + RICERCA)
             // ---------------------------
+
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 20.dp)
+                    .padding(horizontal = 50.dp)
+                    .padding(end = 10.dp)
             ) {
-
-                Text("Riepilogo Cliente", fontSize = 18.sp)
-                Spacer(Modifier.height(20.dp))
-
-                Text("Nome:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = clienteSelezionato?.fullName ?: "—",
-                    fontSize = 16.sp
-                )
-
-                Spacer(Modifier.height(20.dp))
-
-                Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = clienteSelezionato?.tipologia ?: "—",
-                    fontSize = 16.sp
-                )
-
-                Spacer(Modifier.height(20.dp))
-
-                Text("Totale ore lavorate:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = "%.2f".format(totaleOre),
-                    fontSize = 18.sp,
-                    color = Color(0xFF4CAF50)
-                )
-
-                Spacer(Modifier.height(30.dp))
-
-                // -----------------------------------------
-                // RIEPILOGO MATERIALE USATO
-                // -----------------------------------------
-                Text("Materiali utilizzati:", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .border(1.dp, Color.LightGray)
-                ) {
-                    items(materialiUsati) { (mat, qty) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(6.dp)
-                        ) {
-                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f))
-                            Text("x $qty", modifier = Modifier.weight(0.3f))
-                        }
-                    }
-                }
-            }
-
-            // DIVIDER
-            Divider(
-                color = Color.LightGray,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(5.dp)
-                    .padding(horizontal = 10.dp)
-            )
-
-            // ---------------------------
-            // COLONNA SINISTRA: DROPDOWN MENU --> CLIENTI
-            // ---------------------------
-            Column(modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 50.dp)
-                .padding(end = 10.dp)) {
 
                 Text("Seleziona Cliente", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
-                // ---------------------------
-                // DROPDOWN CLIENTI (fix visuale)
-                // ---------------------------
-                Box {
-                    Button(
-                        onClick = { expanded = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Scegli cliente")
-                    }
+                // -----------------------------------------
+                // BARRA DI RICERCA CLIENTI
+                // -----------------------------------------
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Cerca cliente...") },
+                    singleLine = true
+                )
 
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        clienti.forEach { cliente ->
-                            DropdownMenuItem(onClick = {
-                                clienteSelezionato = cliente
-                                expanded = false
-                                totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
-                            }) {
-                                Text("${cliente.fullName} - ${cliente.tipologia}")
-                            }
+                Spacer(Modifier.height(10.dp))
+
+                // Filtraggio clienti
+                val clientiFiltrati = clienti.filter {
+                    it.fullName.contains(searchText, ignoreCase = true) ||
+                            it.tipologia.contains(searchText, ignoreCase = true)
+                }
+
+                // -----------------------------------------
+                // TABELLA CLIENTI
+                // -----------------------------------------
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                        .border(1.dp, Color.Gray)
+                        .padding(horizontal = 5.dp)
+                ) {
+                    items(clientiFiltrati) { cliente ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(6.dp)
+                                .border(
+                                    1.dp,
+                                    if (clienteSelezionato?.id == cliente.id) Color.Blue else Color.LightGray
+                                )
+                                .padding(8.dp)
+                                .clickable {
+                                    clienteSelezionato = cliente
+                                    totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
+                                }
+                        ) {
+                            Text(cliente.fullName, modifier = Modifier.weight(1f))
+                            Text(cliente.tipologia, modifier = Modifier.weight(1f))
                         }
                     }
                 }
 
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(20.dp))
 
                 // -----------------------------------------
                 // SELEZIONE MATERIALE (TABELLA)
@@ -195,8 +153,9 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(300.dp)
                         .border(1.dp, Color.Gray)
+                        .padding(horizontal = 5.dp)
                 ) {
                     items(listaMateriali) { materiale ->
                         Row(
@@ -259,7 +218,7 @@ fun Activity1Screen(onBack: () -> Unit) {
             )
 
             // ---------------------------
-            // COLONNA DESTRA: DATI LAVORO
+            // COLONNA CENTRALE - DATI LAVORO
             // ---------------------------
             Column(modifier = Modifier
                 .weight(1f)
@@ -381,6 +340,79 @@ fun Activity1Screen(onBack: () -> Unit) {
                     Text("Torna al menu")
                 }
             }
-        }
-    }
+
+            // DIVIDER
+            Divider(
+                color = Color.LightGray,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(5.dp)
+                    .padding(horizontal = 10.dp)
+            )
+
+            Spacer(Modifier.width(40.dp))
+
+            // ---------------------------
+            // COLONNA DESTRA: RIEPILOGO CLIENTI
+            // ---------------------------
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 20.dp)
+            ) {
+
+                Text("Riepilogo Cliente", fontSize = 18.sp)
+                Spacer(Modifier.height(20.dp))
+
+                Text("Nome:", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = clienteSelezionato?.fullName ?: "—",
+                    fontSize = 16.sp
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = clienteSelezionato?.tipologia ?: "—",
+                    fontSize = 16.sp
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                Text("Totale ore lavorate:", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = "%.2f".format(totaleOre),
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50)
+                )
+
+                Spacer(Modifier.height(30.dp))
+
+                // -----------------------------------------
+                // RIEPILOGO MATERIALE USATO
+                // -----------------------------------------
+                Text("Materiali utilizzati:", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .border(1.dp, Color.LightGray)
+                ) {
+                    items(materialiUsati) { (mat, qty) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(6.dp)
+                        ) {
+                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f))
+                            Text("x $qty", modifier = Modifier.weight(0.3f))
+                        }
+                    }
+                }
+            }
+        } // chiusura ROW
+    } // chiusura box
 }
