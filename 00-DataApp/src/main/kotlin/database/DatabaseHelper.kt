@@ -237,7 +237,7 @@ object DatabaseHelper {
         }
     }
 
-    // Inseri Rapportino-Materiale
+    // Inserimento Rapportino-Materiale
     fun insertRapportinoMateriale(rapportinoId: Int, materialeId: Int, quantita: Double) {
         val sql = "INSERT INTO RapportinoMateriale (rapportinoId, materialeId, quantita) VALUES (?, ?, ?)"
 
@@ -252,19 +252,21 @@ object DatabaseHelper {
     }
 
     // Select Materiale utilizzato nel Rapportino
-    fun getMaterialiForRapportino(rapportinoId: Int): List<Pair<Materiale, Double>> {
+    fun getMaterialiUsatiDaCliente(cliente: String): List<Pair<Materiale, Double>> {
         val result = mutableListOf<Pair<Materiale, Double>>()
 
         val sql = """
-        SELECT m.*, rm.quantita
+        SELECT m.*, SUM(rm.quantita) AS totaleQuantita
         FROM RapportinoMateriale rm
         JOIN Materiale m ON m.id = rm.materialeId
-        WHERE rm.rapportinoId = ?
+        JOIN Rapportino r ON r.id = rm.rapportinoId
+        WHERE r.cliente = ?
+        GROUP BY m.id
     """.trimIndent()
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setInt(1, rapportinoId)
+                stmt.setString(1, cliente)
                 val rs = stmt.executeQuery()
                 while (rs.next()) {
                     val materiale = Materiale(
@@ -274,7 +276,7 @@ object DatabaseHelper {
                         codice = rs.getString("codice"),
                         prezzo = rs.getDouble("prezzo")
                     )
-                    val quantita = rs.getDouble("quantita")
+                    val quantita = rs.getDouble("totaleQuantita")
                     result.add(materiale to quantita)
                 }
             }

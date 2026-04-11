@@ -1,5 +1,7 @@
 package ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,13 +18,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +84,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                 .padding(16.dp),
         ) {
 
+            /* COLONNA SINISTRA CLIENTI */
+
             // ---------------------------
             // COLONNA SINISTRA: CLIENTI (TABELLA + RICERCA)
             // ---------------------------
@@ -85,8 +93,9 @@ fun Activity1Screen(onBack: () -> Unit) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 50.dp)
+                    .padding(horizontal = 10.dp)
                     .padding(end = 10.dp)
+                    // .background(Color(0xFFF7F7F7)) // grigio chiarissimo
             ) {
 
                 Text("Seleziona Cliente", fontSize = 16.sp)
@@ -132,8 +141,9 @@ fun Activity1Screen(onBack: () -> Unit) {
                                 )
                                 .padding(8.dp)
                                 .clickable {
-                                    clienteSelezionato = cliente
-                                    totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
+                                    clienteSelezionato = cliente // Selezione Cliente
+                                    totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName) // Riepilogo ore
+                                    materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.fullName) // Riepilogo materiali usati
                                 }
                         ) {
                             Text(cliente.fullName, modifier = Modifier.weight(1f))
@@ -147,7 +157,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // -----------------------------------------
                 // SELEZIONE MATERIALE (TABELLA)
                 // -----------------------------------------
-                Text("Materiale utilizzato", fontSize = 16.sp)
+                Text("Materiale", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
@@ -210,19 +220,27 @@ fun Activity1Screen(onBack: () -> Unit) {
 
             // DIVIDER
             Divider(
-                color = Color.LightGray,
+                color = Color(0xFFE0E0E0),
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(1.dp)
-                    .padding(horizontal = 10.dp)
+                    .width(2.dp)
             )
+            /* FIME COLONNA SINISTRA CLIENTI */
+
+
+
+            /* COLONNA CENTRALE DATI LAVORO */
 
             // ---------------------------
             // COLONNA CENTRALE - DATI LAVORO
             // ---------------------------
             Column(modifier = Modifier
+
                 .weight(1f)
-                .padding(start = 20.dp)) {
+                .padding(horizontal = 10.dp)
+                .padding(end = 10.dp)
+
+            ){
 
                 Text("Inserisci Nome", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
@@ -325,40 +343,64 @@ fun Activity1Screen(onBack: () -> Unit) {
                     } else {
                         message = "Compila tutti i campi!"
                     }
-                }) {
+                },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Color(0xFFF7F7F7),
+                        contentColor = Color.Black),
+                    shape = RoundedCornerShape(10.dp),
+                )
+
+                {
                     Text("Salva nel database")
                 }
+
 
                 if (message.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Text(message)
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(6.dp))
 
-                Button(onClick = onBack) {
+                // Button TORNA AL MENU
+                Button(onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        backgroundColor = Color(0xFFF7F7F7),
+                        contentColor = Color.Black),
+                    shape = RoundedCornerShape(10.dp),)
+
+
+                {
                     Text("Torna al menu")
                 }
             }
 
             // DIVIDER
             Divider(
-                color = Color.LightGray,
+                color = Color(0xFFE0E0E0),
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(5.dp)
-                    .padding(horizontal = 10.dp)
+                    .width(2.dp)
             )
 
             Spacer(Modifier.width(40.dp))
 
+            /* FINE COLONNA CENTRALE DATI LAVORO */
+
+
+            /* COLONNA DESTRA RIEPILOGO */
+
             // ---------------------------
             // COLONNA DESTRA: RIEPILOGO CLIENTI
             // ---------------------------
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 20.dp)
+            Column( modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 10.dp)
+                .padding(end = 10.dp)
             ) {
 
                 Text("Riepilogo Cliente", fontSize = 18.sp)
@@ -413,6 +455,9 @@ fun Activity1Screen(onBack: () -> Unit) {
                     }
                 }
             }
+
+            /* FINE COLONNA DESTRA RIEPILOGO */
+
         } // chiusura ROW
     } // chiusura box
 }
