@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 import database.DatabaseHelper
 import dataclass.Materiale
@@ -107,7 +108,7 @@ fun MaterialeActivity(
                         codice = ""
                         prezzo = ""
                     }
-                }
+                }, modifier = Modifier.width(300.dp)
             ) {
                 Text("Salva Materiale")
             }
@@ -132,7 +133,8 @@ fun MaterialeActivity(
                         modello = ""
                         codice = ""
                         prezzo = ""
-                    }
+
+                    } ,modifier = Modifier.width(300.dp)
                 ) {
                     Text("Aggiorna Materiale")
                 }
@@ -150,7 +152,8 @@ fun MaterialeActivity(
                         modello = ""
                         codice = ""
                         prezzo = ""
-                    }
+
+                    }, modifier = Modifier.width(300.dp)
 
                 ) {
                     Text("Elimina Materiale")
@@ -159,7 +162,9 @@ fun MaterialeActivity(
             Spacer(Modifier.height(10.dp))
 
             // Button torna al menu
-            Button(onClick = onBackToMenu) {
+            Button(onClick = onBackToMenu,
+                modifier = Modifier.width(300.dp))
+            {
                 Text("Torna al Menu")
             }
         }
@@ -192,12 +197,12 @@ fun MaterialeActivity(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp)
+                            .padding(2.dp)
                             .border(
                                 1.dp,
                                 if (selectedMateriale?.id == materiale.id) Color.Blue else Color.LightGray
                             )
-                            .padding(8.dp)
+                            .padding(2.dp)
                             .clickable {
                                 selectedMateriale = materiale
                                 marca = materiale.marca
@@ -206,10 +211,10 @@ fun MaterialeActivity(
                                 prezzo = materiale.prezzo.toString()
                             }
                     ) {
-                        Text(materiale.marca, modifier = Modifier.weight(1f))
-                        Text(materiale.modello, modifier = Modifier.weight(1f))
-                        Text(materiale.codice, modifier = Modifier.weight(1f))
-                        Text("${materiale.prezzo} €", modifier = Modifier.weight(1f))
+                        Text(materiale.marca, modifier = Modifier.weight(2f). padding(all = 3.dp), fontSize = 12.sp)
+                        Text(materiale.modello, modifier = Modifier.weight(2f).padding(all = 3.dp), fontSize = 12.sp)
+                        Text(materiale.codice, modifier = Modifier.weight(1f).padding(all = 3.dp), fontSize = 12.sp)
+                        Text("${materiale.prezzo} €", modifier = Modifier.weight(1f).padding(all = 3.dp), fontSize = 12.sp)
                     }
                 }
             }
