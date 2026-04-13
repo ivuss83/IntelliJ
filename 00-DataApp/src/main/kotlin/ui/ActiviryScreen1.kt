@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
@@ -38,6 +40,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -62,6 +66,8 @@ fun Activity1Screen(onBack: () -> Unit) {
     var totaleOre by remember { mutableStateOf(0.0) }
 
     var searchText by remember { mutableStateOf("") }
+
+    val focusRequester = remember { FocusRequester() }
 
     // -----------------------------------------
     // Materiale - Rapportino
@@ -106,29 +112,38 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // -----------------------------------------
                 // BARRA DI RICERCA CLIENTI
                 // -----------------------------------------
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 40.dp),   // 🔥 riduce l’altezza SENZA tagliare il contenuto
-                    placeholder = {
-                        Text(
-                            "Cerca cliente...",
+                        .height(30.dp)
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .clickable { focusRequester.requestFocus() }
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) {
+                    BasicTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
                             fontSize = 12.sp,
-                            maxLines = 1
-                        )
-                    },
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 13.sp
-                    ),
-                    singleLine = true,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        backgroundColor = Color.Transparent,
-                        focusedBorderColor = Color.Blue,
-                        unfocusedBorderColor = Color.Gray
+                            color = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxSize()               // 🔥 ora il click funziona ovunque
+                            .focusRequester(focusRequester),
+                        decorationBox = { innerTextField ->
+                            if (searchText.isEmpty()) {
+                                Text(
+                                    "Cerca cliente...",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            innerTextField()
+                        }
                     )
-                )
+                }
 
                 Spacer(Modifier.height(10.dp))
 
@@ -405,8 +420,6 @@ fun Activity1Screen(onBack: () -> Unit) {
                     .width(2.dp)
             )
 
-            Spacer(Modifier.width(40.dp))
-
             /* FINE COLONNA CENTRALE DATI LAVORO */
 
 
@@ -458,17 +471,17 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(300.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
                     items(materialiUsati) { (mat, qty) ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(6.dp)
+                                .padding(3.dp)
                         ) {
-                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f))
-                            Text("x $qty", modifier = Modifier.weight(0.3f))
+                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
+                            Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
                         }
                     }
                 }
