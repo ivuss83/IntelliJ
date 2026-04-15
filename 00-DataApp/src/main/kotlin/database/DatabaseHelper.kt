@@ -22,8 +22,11 @@ object DatabaseHelper {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
             oreLavoro REAL NOT NULL,
-            cliente TEXT NOT NULL,
-            tipologia TEXT NOT NULL
+            /*cliente TEXT NOT NULL, riga originale prima della modifica*/
+            clienteId INTEGER NOT NULL,
+            tipologia TEXT NOT NULL,
+            FOREIGN KEY(clienteId) REFERENCES Clienti(id)
+           
             );
         """.trimIndent()
 
@@ -35,14 +38,15 @@ object DatabaseHelper {
     }
 
     // insert Rapportino
-    fun insertRapportino(nome: String, ore: Double, cliente: String, tipologia: String) {
-        val sql = "INSERT INTO Rapportino(Nome, OreLavoro, cliente, tipologia) VALUES(?, ?, ?, ?)"
+    /*fun insertRapportino(nome: String, ore: Double, cliente: String, tipologia: String)*/
+    fun insertRapportino(nome: String, ore: Double, clienteId: Int, tipologia: String){
+        val sql = "INSERT INTO Rapportino(Nome, OreLavoro, clienteId, tipologia) VALUES(?, ?, ?, ?)"
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { pstmt ->
                 pstmt.setString(1, nome)
                 pstmt.setDouble(2, ore)
-                pstmt.setString(3, cliente)
+                pstmt.setInt(3, clienteId)
                 pstmt.setString(4, tipologia)
                 pstmt.executeUpdate()
             }
@@ -108,7 +112,7 @@ object DatabaseHelper {
 
     // Riepilogo totale ore cliente
     fun getTotaleOreCliente(cliente: String): Double {
-        val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE cliente = ?"
+        val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE clienteId = ?"
         var totale = 0.0
 
         connect().use { conn ->
@@ -260,7 +264,7 @@ object DatabaseHelper {
         FROM RapportinoMateriale rm
         JOIN Materiale m ON m.id = rm.materialeId
         JOIN Rapportino r ON r.id = rm.rapportinoId
-        WHERE r.cliente = ?
+        WHERE r.clienteId = ?
         GROUP BY m.id
     """.trimIndent()
 

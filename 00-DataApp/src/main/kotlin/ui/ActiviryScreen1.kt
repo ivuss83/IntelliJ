@@ -330,7 +330,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                         DatabaseHelper.insertRapportino(
                             nome = nome,
                             ore = oreLavoro.toDouble(),
-                            cliente = clienteSelezionato!!.fullName,
+                            clienteId = clienteSelezionato!!.id, // Stringa OLD: cliente = clienteSelezionato!!.fullname
                             tipologia = clienteSelezionato!!.tipologia
                         )
 
@@ -401,6 +401,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // Quantità
                 TextField(
                     value = quantita,
+
                     onValueChange = { quantita = it },
                     label = { Text("Quantità", fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
@@ -507,163 +508,3 @@ fun Activity1Screen(onBack: () -> Unit) {
     } // chiusura box
 }
 
-// 1. Tabella Rapportino: usare clienteId invece di cliente
-//Prima:
-//
-//kotlin
-//fun createRapportinoTableIfNeeded() {
-//    val sql = """
-//        CREATE TABLE IF NOT EXISTS Rapportino (
-//        id INTEGER PRIMARY KEY AUTOINCREMENT,
-//        nome TEXT NOT NULL,
-//        oreLavoro REAL NOT NULL,
-//        cliente TEXT NOT NULL,
-//        tipologia TEXT NOT NULL
-//        );
-//    """.trimIndent()
-//    ...
-//}
-//Dopo:
-//
-//kotlin
-//fun createRapportinoTableIfNeeded() {
-//    val sql = """
-//        CREATE TABLE IF NOT EXISTS Rapportino (
-//        id INTEGER PRIMARY KEY AUTOINCREMENT,
-//        nome TEXT NOT NULL,
-//        oreLavoro REAL NOT NULL,
-//        clienteId INTEGER NOT NULL,
-//        tipologia TEXT NOT NULL,
-//        FOREIGN KEY (clienteId) REFERENCES Clienti(id)
-//        );
-//    """.trimIndent()
-//    ...
-//}
-//Nota: per applicare davvero questa modifica devi cancellare il file Db.db oppure fare una migrazione. Per ora, per semplicità, direi: cancellalo e lascia che l’app lo ricrei.
-//
-//2. insertRapportino: passare l’id, non il nome
-//Prima:
-//
-//kotlin
-//fun insertRapportino(nome: String, ore: Double, cliente: String, tipologia: String) {
-//    val sql = "INSERT INTO Rapportino(Nome, OreLavoro, cliente, tipologia) VALUES(?, ?, ?, ?)"
-//    ...
-//    pstmt.setString(3, cliente)
-//}
-//Dopo:
-//
-//kotlin
-//fun insertRapportino(nome: String, ore: Double, clienteId: Int, tipologia: String) {
-//    val sql = "INSERT INTO Rapportino(nome, oreLavoro, clienteId, tipologia) VALUES(?, ?, ?, ?)"
-//
-//    connect().use { conn ->
-//        conn.prepareStatement(sql).use { pstmt ->
-//            pstmt.setString(1, nome)
-//            pstmt.setDouble(2, ore)
-//            pstmt.setInt(3, clienteId)
-//            pstmt.setString(4, tipologia)
-//            pstmt.executeUpdate()
-//        }
-//    }
-//}
-//3. Riepilogo ore: da cliente: String a clienteId: Int
-//Prima:
-//
-//kotlin
-//fun getTotaleOreCliente(cliente: String): Double {
-//    val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE cliente = ?"
-//    ...
-//    stmt.setString(1, cliente)
-//}
-//Dopo:
-//
-//kotlin
-//fun getTotaleOreCliente(clienteId: Int): Double {
-//    val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE clienteId = ?"
-//    var totale = 0.0
-//
-//    connect().use { conn ->
-//        conn.prepareStatement(sql).use { stmt ->
-//            stmt.setInt(1, clienteId)
-//            val rs = stmt.executeQuery()
-//            if (rs.next()) {
-//                totale = rs.getDouble("totale")
-//            }
-//        }
-//    }
-//    return totale
-//}
-//4. Materiali usati: anche qui usare clienteId
-//Prima:
-//
-//kotlin
-//fun getMaterialiUsatiDaCliente(cliente: String): List<Pair<Materiale, Double>> {
-//    val sql = """
-//        SELECT m.*, SUM(rm.quantita) AS totaleQuantita
-//        FROM RapportinoMateriale rm
-//        JOIN Materiale m ON m.id = rm.materialeId
-//        JOIN Rapportino r ON r.id = rm.rapportinoId
-//        WHERE r.cliente = ?
-//        GROUP BY m.id
-//    """.trimIndent()
-//    ...
-//    stmt.setString(1, cliente)
-//}
-//Dopo:
-//
-//kotlin
-//fun getMaterialiUsatiDaCliente(clienteId: Int): List<Pair<Materiale, Double>> {
-//    val result = mutableListOf<Pair<Materiale, Double>>()
-//
-//    val sql = """
-//        SELECT m.*, SUM(rm.quantita) AS totaleQuantita
-//        FROM RapportinoMateriale rm
-//        JOIN Materiale m ON m.id = rm.materialeId
-//        JOIN Rapportino r ON r.id = rm.rapportinoId
-//        WHERE r.clienteId = ?
-//        GROUP BY m.id
-//    """.trimIndent()
-//
-//    connect().use { conn ->
-//        conn.prepareStatement(sql).use { stmt ->
-//            stmt.setInt(1, clienteId)
-//            val rs = stmt.executeQuery()
-//            while (rs.next()) {
-//                val materiale = Materiale(
-//                    id = rs.getInt("id"),
-//                    marca = rs.getString("marca"),
-//                    modello = rs.getString("modello"),
-//                    codice = rs.getString("codice"),
-//                    prezzo = rs.getDouble("prezzo")
-//                )
-//                val quantita = rs.getDouble("totaleQuantita")
-//                result.add(materiale to quantita)
-//            }
-//        }
-//    }
-//
-//    return result
-//}
-//5. UI: quando selezioni il cliente, passi l’id
-//Nella tua LazyColumn:
-//
-//Prima:
-//
-//kotlin
-//clienteSelezionato = cliente
-//totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName)
-//materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.fullName)
-//Dopo:
-//
-//kotlin
-//clienteSelezionato = cliente
-//totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.id)
-//materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.id)
-//e la tua data class Cliente deve essere:
-//
-//kotlin
-//data class Cliente(
-//    val id: Int,
-//    val fullName: String,
-//    val tipologia: String
-//)
