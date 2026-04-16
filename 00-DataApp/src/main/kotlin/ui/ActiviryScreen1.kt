@@ -54,6 +54,7 @@ import dataclass.Materiale
 import kotlinx.coroutines.delay
 import printdata.generaPdf
 
+
 @Composable
 fun Activity1Screen(onBack: () -> Unit) {
 
@@ -71,7 +72,10 @@ fun Activity1Screen(onBack: () -> Unit) {
 
     val focusRequester = remember { FocusRequester() }
 
-    val errorStatus = "Compila tutti i campi!"
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
+
+
 
     // -----------------------------------------
     // Materiale - Rapportino
@@ -355,7 +359,7 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                     } else {
 
-                        message = "Compila Tutti i Campi !!!"
+                   message = "Compila tutti i campi!"
                     }
                 },
                     modifier = Modifier.fillMaxWidth(),
@@ -506,9 +510,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                     }
                 }
             }
-
             /* FINE COLONNA DESTRA RIEPILOGO */
-
         } // chiusura ROW
     } // chiusura box
 }
