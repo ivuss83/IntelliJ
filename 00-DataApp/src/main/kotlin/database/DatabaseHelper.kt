@@ -111,13 +111,13 @@ object DatabaseHelper {
 
 
     // Riepilogo totale ore cliente
-    fun getTotaleOreCliente(cliente: String): Double {
+    fun getTotaleOreCliente(clienteId: Int): Double {
         val sql = "SELECT SUM(oreLavoro) AS totale FROM Rapportino WHERE clienteId = ?"
         var totale = 0.0
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, cliente)
+                stmt.setInt(1, clienteId)
                 val rs = stmt.executeQuery()
                 if (rs.next()) {
                     totale = rs.getDouble("totale")
@@ -256,7 +256,7 @@ object DatabaseHelper {
     }
 
     // Select Materiale utilizzato nel Rapportino
-    fun getMaterialiUsatiDaCliente(cliente: String): List<Pair<Materiale, Double>> {
+    fun getMaterialiUsatiDaCliente(clienteId: Int): List<Pair<Materiale, Double>> {
         val result = mutableListOf<Pair<Materiale, Double>>()
 
         val sql = """
@@ -270,7 +270,7 @@ object DatabaseHelper {
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, cliente)
+                stmt.setInt(1, clienteId)
                 val rs = stmt.executeQuery()
                 while (rs.next()) {
                     val materiale = Materiale(

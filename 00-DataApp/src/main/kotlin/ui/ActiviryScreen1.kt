@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import database.DatabaseHelper
 import dataclass.Cliente
 import dataclass.Materiale
+import kotlinx.coroutines.delay
 import printdata.generaPdf
 
 @Composable
@@ -178,8 +179,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                                 .padding(3.dp)
                                 .clickable {
                                     clienteSelezionato = cliente // Selezione Cliente
-                                    totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.fullName) // Riepilogo ore
-                                    materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.fullName) // Riepilogo materiali usati
+                                    totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.id) // Riepilogo ore
+                                    materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.id) // Riepilogo materiali usati
                                 }
                         ) {
                             Text(cliente.fullName, modifier = Modifier.weight(1f), fontSize = 11.sp)
@@ -330,7 +331,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                         DatabaseHelper.insertRapportino(
                             nome = nome,
                             ore = oreLavoro.toDouble(),
-                            clienteId = clienteSelezionato!!.id, // Stringa OLD: cliente = clienteSelezionato!!.fullname
+                            clienteId = clienteSelezionato!!.id,
                             tipologia = clienteSelezionato!!.tipologia
                         )
 
@@ -359,10 +360,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 },
                     modifier = Modifier.fillMaxWidth(),
                     border = BorderStroke(1.dp, Color.Gray),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color(0xFFF7F7F7),
-                        contentColor = Color.Black),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(10.dp)
                 )
 
                 {
@@ -371,13 +369,10 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(6.dp))
 
-                // Button TORNA AL MENU
+                // BUTTON TORNA AL MENU
                 Button(onClick = onBack,
                     modifier = Modifier.fillMaxWidth(),
                     border = BorderStroke(1.dp, Color.Gray),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        backgroundColor = Color(0xFFF7F7F7),
-                        contentColor = Color.Black),
                     shape = RoundedCornerShape(10.dp),)
 
 
@@ -385,7 +380,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                     Text("Torna al menu")
                 }
 
-                // Messaggio ERRORE di Compilazione
+                // Messaggio ERRORE/SUCCESSO di Compilazione
                 if (message.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -393,6 +388,14 @@ fun Activity1Screen(onBack: () -> Unit) {
                         color = Color.Red,
                         fontSize = 20.sp
                     )
+                }
+
+                // Auto HIDE del Messaggio di ERRORE/SUCCESSO
+                LaunchedEffect(message){
+                    if(message.isNotEmpty()){
+                        delay(2500)
+                        message = ""
+                    }
                 }
 
                 // Spacer per tenere il button "Aggiungi Materiale" in fondo alla pagina
@@ -413,7 +416,7 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // Aggiungi materiale al rapportino
+                // BUTTON Aggiungi materiale al rapportino
                 Button(
                     onClick = {
                         if (selectedMateriale != null && quantita.isNotBlank()) {
@@ -421,7 +424,9 @@ fun Activity1Screen(onBack: () -> Unit) {
                             quantita = ""
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("Aggiungi materiale")
                 }
