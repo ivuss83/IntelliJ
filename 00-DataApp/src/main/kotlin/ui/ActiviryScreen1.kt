@@ -58,7 +58,10 @@ import printdata.generaPdf
 @Composable
 fun Activity1Screen(onBack: () -> Unit) {
 
+    // Variabili per Barre di ricerca
     var clienti by remember { mutableStateOf(listOf<Cliente>()) }
+    var materiale by remember { mutableStateOf(listOf<Materiale>()) }
+
     var clienteSelezionato by remember { mutableStateOf<Cliente?>(null) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -69,6 +72,7 @@ fun Activity1Screen(onBack: () -> Unit) {
     var totaleOre by remember { mutableStateOf(0.0) }
 
     var searchText by remember { mutableStateOf("") }
+    var searchTextMat by remember { mutableStateOf("") }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -201,6 +205,49 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Text("Materiale", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
+                // Barra di Ricerca Materiale
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp)
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .clickable { focusRequester.requestFocus() }
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) {
+                    BasicTextField(
+                        value = searchTextMat,
+                        onValueChange = { searchTextMat = it },
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxSize()               // 🔥 ora il click funziona ovunque
+                            .focusRequester(focusRequester),
+                        decorationBox = { innerTextField ->
+                            if (searchTextMat.isEmpty()) {
+                                Text(
+                                    "Cerca Materiale...",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Filtraggio Materiale
+                val materialiFiltrati = materiale.filter {
+                    it.marca.contains(searchTextMat, ignoreCase = true) ||
+                            it.modello.contains(searchTextMat, ignoreCase = true) ||
+                                it.codice.contains(searchTextMat, ignoreCase = true) ||
+                }
+
+                // Tabella Materiale
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -208,7 +255,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                         .border(1.dp, Color.Gray)
                         .padding(horizontal = 2.dp)
                 ) {
-                    items(listaMateriali) { materiale ->
+                    items(materialiFiltrati) { materiale ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
