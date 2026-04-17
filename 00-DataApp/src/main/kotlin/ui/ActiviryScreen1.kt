@@ -244,7 +244,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 val materialiFiltrati = materiale.filter {
                     it.marca.contains(searchTextMat, ignoreCase = true) ||
                             it.modello.contains(searchTextMat, ignoreCase = true) ||
-                                it.codice.contains(searchTextMat, ignoreCase = true) ||
+                                it.codice.contains(searchTextMat, ignoreCase = true)
                 }
 
                 // Tabella Materiale
