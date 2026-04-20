@@ -84,6 +84,11 @@ fun Activity1Screen(onBack: () -> Unit) {
     var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
     var selectedMateriale by remember { mutableStateOf<Materiale?>(null) }
     var quantita by remember { mutableStateOf("") }
+
+    // Materiali già usati dal cliente (storico)
+    var materialiRiepilogo by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
+
+    // Materiali del nuovo rapportino
     var materialiUsati by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
 
     LaunchedEffect(Unit) {
@@ -186,7 +191,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                                 .clickable {
                                     clienteSelezionato = cliente // Selezione Cliente
                                     totaleOre = DatabaseHelper.getTotaleOreCliente(cliente.id) // Riepilogo ore
-                                    materialiUsati = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.id) // Riepilogo materiali usati
+                                    materialiRiepilogo = DatabaseHelper.getMaterialiUsatiDaCliente(cliente.id) // Riepilogo storico dal DB
+                                    materialiUsati = emptyList()// Materiali del nuovo rapportino → si parte da zero
                                 }
                         ) {
                             Text(cliente.fullName, modifier = Modifier.weight(1f), fontSize = 11.sp)
@@ -550,7 +556,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Button(
                     onClick = {
                         if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                            materialiUsati = materialiUsati + (selectedMateriale!! to quantitaDouble)
+                            materialiUsati = mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+
                             quantita = ""
                         } else {
                             alertMessage = "Inserire un Numero nel campo Quantità!"
@@ -579,53 +586,80 @@ fun Activity1Screen(onBack: () -> Unit) {
             /* COLONNA DESTRA RIEPILOGO */
 
             // ---------------------------
-            // COLONNA DESTRA: RIEPILOGO CLIENTI
-            // ---------------------------
-            Column( modifier = Modifier
-                .weight(0.6f)
-                .padding(horizontal = 10.dp)
-                .padding(end = 10.dp)
+// COLONNA DESTRA: RIEPILOGO CLIENTI
+// ---------------------------
+            Column(
+                modifier = Modifier
+                    .weight(0.6f)
+                    .padding(horizontal = 10.dp)
+                    .padding(end = 10.dp)
             ) {
 
                 Text("Riepilogo Cliente", fontSize = 18.sp)
                 Spacer(Modifier.height(20.dp))
 
                 Text("Nome:", fontSize = 14.sp, color = Color.Gray)
-                    Text(
-                        text = clienteSelezionato?.fullName ?: "—",
-                        fontSize = 16.sp
-                    )
+                Text(
+                    text = clienteSelezionato?.fullName ?: "—",
+                    fontSize = 16.sp
+                )
 
                 Spacer(Modifier.height(20.dp))
 
                 Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
-                    Text(
-                        text = clienteSelezionato?.tipologia ?: "—",
-                        fontSize = 16.sp
-                    )
+                Text(
+                    text = clienteSelezionato?.tipologia ?: "—",
+                    fontSize = 16.sp
+                )
 
                 Spacer(Modifier.height(20.dp))
 
                 Text("Totale ore lavorate:", fontSize = 14.sp, color = Color.Gray)
-                    Text(
-                        text = "%.2f".format(totaleOre),
-                        fontSize = 18.sp,
-                        color = Color(0xFF4CAF50)
-                    )
+                Text(
+                    text = "%.2f".format(totaleOre),
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50)
+                )
 
                 Spacer(Modifier.height(30.dp))
 
                 // -----------------------------------------
-                // RIEPILOGO MATERIALE USATO
+                // RIEPILOGO MATERIALE USATO (STORICO)
                 // -----------------------------------------
-                Text("Materiali utilizzati:", fontSize = 16.sp)
+                Text("Materiali utilizzati (storico):", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp)
+                        .height(150.dp)
                         .border(1.dp, Color.LightGray)
+                ) {
+                    items(materialiRiepilogo) { (mat, qty) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(3.dp)
+                        ) {
+                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
+                            Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(30.dp))
+
+                // -----------------------------------------
+                // MATERIALI DEL NUOVO RAPPORTINO
+                // -----------------------------------------
+                Text("Materiali aggiunti ora:", fontSize = 16.sp, color = Color(0xFF2196F3))
+                Spacer(Modifier.height(10.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .border(1.dp, Color.Gray)
                 ) {
                     items(materialiUsati) { (mat, qty) ->
                         Row(
@@ -643,4 +677,14 @@ fun Activity1Screen(onBack: () -> Unit) {
         } // chiusura ROW
     } // chiusura box
 }
+fun mergeMateriali(lista: List<Pair<Materiale, Double>>): List<Pair<Materiale, Double>> {
+    return lista
+        .groupBy { it.first.id }   // raggruppa per ID materiale
+        .map { (_, items) ->
+            val materiale = items.first().first
+            val quantitaTotale = items.sumOf { it.second }
+            materiale to quantitaTotale
+        }
+}
+
 

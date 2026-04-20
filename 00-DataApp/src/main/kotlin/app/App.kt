@@ -19,6 +19,7 @@ import database.DatabaseHelper
 import kotlinx.coroutines.delay
 import ui.Activity1Screen
 import ui.ClienteActivity
+import ui.ImpostazioniActivity
 import ui.MaterialeActivity
 import ui.MenuScreen
 import kotlin.time.Duration.Companion.milliseconds
@@ -27,7 +28,8 @@ enum class Screen {
     MENU,
     ACTIVITY1,
     CLIENTI,
-    MATERIALE
+    MATERIALE,
+    IMPOSTAZIONI
 }
 
 @Composable
@@ -39,6 +41,8 @@ fun App(windowState: WindowState) {
         DatabaseHelper.createClientiTableIfNeeded()
         DatabaseHelper.createMaterialeTableIfNeeded()
         DatabaseHelper.createRapportinoMaterialeTableIfNeeded()
+        DatabaseHelper.createImpostazioniTableIfNeeded()
+
     }
 
     var currentScreen by remember { mutableStateOf(Screen.MENU) }
@@ -57,7 +61,8 @@ fun App(windowState: WindowState) {
                     // torna alla dimensione normale x MENU SCREEN
                     onActivity1 = { currentScreen = Screen.ACTIVITY1 },
                     onClienti = { currentScreen = Screen.CLIENTI },
-                    onMateriale = { currentScreen = Screen.MATERIALE }
+                    onMateriale = { currentScreen = Screen.MATERIALE },
+                    onImpostazioni = { currentScreen = Screen.IMPOSTAZIONI }
                 )
             }
 
@@ -97,6 +102,18 @@ fun App(windowState: WindowState) {
                 }
                 MaterialeActivity(
                     onBackToMenu = { currentScreen = Screen.MENU },
+                )
+            }
+
+            Screen.IMPOSTAZIONI -> {
+                LaunchedEffect(Unit) {
+                    windowState.placement = WindowPlacement.Floating
+                    windowState.size = DpSize(600.dp, 400.dp)
+                    windowState.position = WindowPosition.Aligned(Alignment.Center)
+                }
+
+                ImpostazioniActivity(
+                    onBack = { currentScreen = Screen.MENU }
                 )
             }
         }

@@ -1,6 +1,7 @@
 package database
 
 import dataclass.Cliente
+import dataclass.Impostazioni
 import dataclass.Materiale
 import dataclass.Rapportino
 import java.sql.Connection
@@ -384,6 +385,73 @@ object DatabaseHelper {
             } catch (e: Exception) {
                 conn.rollback()
                 throw e
+            }
+        }
+    }
+
+    /* TARIFFE */
+    fun createImpostazioniTableIfNeeded() {
+        val sql = """
+        CREATE TABLE IF NOT EXISTS Impostazioni (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tariffaOraria REAL NOT NULL,
+            rincaroMateriale REAL NOT NULL
+        );
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.execute(sql)
+            }
+        }
+
+        // Se la tabella è vuota, inseriamo una riga di default
+        val countSql = "SELECT COUNT(*) FROM Impostazioni"
+
+        connect().use { conn ->
+            val count = conn.createStatement().use { stmt ->
+                val rs = stmt.executeQuery(countSql)
+                rs.next()
+                rs.getInt(1)
+            }
+
+            if (count == 0) {
+                val insertSql = "INSERT INTO Impostazioni (tariffaOraria, rincaroMateriale) VALUES (?, ?)"
+                conn.prepareStatement(insertSql).use { stmt ->
+                    stmt.setDouble(1, 0.0)   // default
+                    stmt.setDouble(2, 0.0)   // default
+                    stmt.executeUpdate()
+                }
+            }
+        }
+    }
+
+    fun saveImpostazioni(tariffa: Double, rincaro: Double) {
+        val sql = "UPDATE Impostazioni SET tariffaOraria = ?, rincaroMateriale = ? WHERE id = 1"
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setDouble(1, tariffa)
+                stmt.setDouble(2, rincaro)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    fun getImpostazioni(): Impostazioni {
+        val sql = "SELECT tariffaOraria, rincaroMateriale FROM Impostazioni LIMIT 1"
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                val rs = stmt.executeQuery()
+                return if (rs.next()) {
+                    Impostazioni(
+                        tariffaOraria = rs.getDouble("tariffaOraria"),
+                        rincaroMateriale = rs.getDouble("rincaroMateriale")
+                    )
+                } else {
+                    Impostazioni(0.0, 0.0)
+                }
             }
         }
     }
