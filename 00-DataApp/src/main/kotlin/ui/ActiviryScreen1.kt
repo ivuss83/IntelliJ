@@ -675,6 +675,9 @@ fun Activity1Screen(onBack: () -> Unit) {
         } // chiusura ROW
     } // chiusura box
 }
+
+
+// Funzione per evitare dopppioni nella tabella "Materiali aggiunti ora"
 fun mergeMateriali(lista: List<Pair<Materiale, Double>>): List<Pair<Materiale, Double>> {
     return lista
         .groupBy { it.first.id }   // raggruppa per ID materiale per unificare i materiali uguali basati sull'ID
