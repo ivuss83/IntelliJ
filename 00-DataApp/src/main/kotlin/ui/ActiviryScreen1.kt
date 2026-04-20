@@ -55,8 +55,6 @@ import dataclass.Cliente
 import dataclass.Materiale
 import dataclass.Rapportino
 
-
-
 @Composable
 fun Activity1Screen(onBack: () -> Unit) {
     // Variabili per Barre di ricerca
@@ -679,11 +677,11 @@ fun Activity1Screen(onBack: () -> Unit) {
 }
 fun mergeMateriali(lista: List<Pair<Materiale, Double>>): List<Pair<Materiale, Double>> {
     return lista
-        .groupBy { it.first.id }   // raggruppa per ID materiale
-        .map { (_, items) ->
-            val materiale = items.first().first
-            val quantitaTotale = items.sumOf { it.second }
-            materiale to quantitaTotale
+        .groupBy { it.first.id }   // raggruppa per ID materiale per unificare i materiali uguali basati sull'ID
+        .map { (_, items) -> // items è la lista di coppie che hanno lo stesso materiale
+            val materiale = items.first().first // Prende il materiale dal primo elemento del gruppo (stesso ID)
+            val quantitaTotale = items.sumOf { it.second } // Somma le quantità dello stesso gruppo
+            materiale to quantitaTotale // Ricrea una nuova coppia
         }
 }
 
