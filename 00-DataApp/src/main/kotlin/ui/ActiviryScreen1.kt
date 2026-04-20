@@ -1,9 +1,11 @@
 package ui
 
+import alertDialog.Alert
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -22,7 +24,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
@@ -44,41 +48,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import database.DatabaseHelper
 import dataclass.Cliente
 import dataclass.Materiale
-import kotlinx.coroutines.delay
-import printdata.generaPdf
+import dataclass.Rapportino
+
 
 
 @Composable
 fun Activity1Screen(onBack: () -> Unit) {
-
     // Variabili per Barre di ricerca
     var clienti by remember { mutableStateOf(listOf<Cliente>()) }
-    var materiale by remember { mutableStateOf(listOf<Materiale>()) }
-
     var clienteSelezionato by remember { mutableStateOf<Cliente?>(null) }
-    var expanded by remember { mutableStateOf(false) }
 
     var nome by remember { mutableStateOf("") }
     var oreLavoro by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-
     var totaleOre by remember { mutableStateOf(0.0) }
 
     var searchText by remember { mutableStateOf("") }
     var searchTextMat by remember { mutableStateOf("") }
 
     val focusRequester = remember { FocusRequester() }
+    val quantitaFocusRequester = remember { FocusRequester() }
 
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
-
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
 
     // -----------------------------------------
@@ -103,6 +100,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 .fillMaxWidth()
                 .padding(16.dp),
         ) {
+
 
             /* COLONNA SINISTRA CLIENTI */
 
@@ -202,6 +200,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // -----------------------------------------
                 // TABELLA MATERIALE
                 // -----------------------------------------
+
                 Text("Materiale", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
@@ -241,7 +240,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
 
                 // Filtraggio Materiale
-                val materialiFiltrati = materiale.filter {
+                val materialiFiltrati = listaMateriali.filter {
                     it.marca.contains(searchTextMat, ignoreCase = true) ||
                             it.modello.contains(searchTextMat, ignoreCase = true) ||
                                 it.codice.contains(searchTextMat, ignoreCase = true)
@@ -267,6 +266,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                                 .padding(3.dp)
                                 .clickable {
                                     selectedMateriale = materiale
+                                    quantitaFocusRequester.requestFocus()
                                 }
                         ) {
                             Text(materiale.marca, modifier = Modifier.weight(1f), fontSize = 11.sp)
@@ -303,41 +303,77 @@ fun Activity1Screen(onBack: () -> Unit) {
                 .padding(end = 10.dp)
 
             ){
-
+                // Testo Nome
                 Text("Inserisci Nome", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
+                    // Spacer
+                        Spacer(Modifier.height(10.dp))
 
-                TextField(
+                BasicTextField(
                     value = nome,
                     onValueChange = { nome = it },
-                    label = { Text("Nome", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    ),
                     singleLine = true,
-                )
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Black   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if (nome.isEmpty()) {
+                            Text(
+                                "Nome",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
 
                 Spacer(Modifier.height(10.dp))
 
-                Text("Ore Lavoro", fontSize = 16.sp)
+                // Testo Ore Lavoro
+                    Text("Ore Lavoro", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
-                TextField(
+                BasicTextField(
                     value = oreLavoro,
                     onValueChange = { oreLavoro = it },
-                    label = { Text("Ore Lavoro", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    ),
                     singleLine = true,
-                )
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Black   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if (oreLavoro.isEmpty()) {
+                            Text(
+                                "Nome",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
 
                 Spacer(Modifier.height(10.dp))
-
-                Text("Cliente", fontSize = 16.sp)
-
+                    Text("Cliente", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
                 TextField(
@@ -353,9 +389,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 )
 
                 Spacer(Modifier.height(10.dp))
-
-                Text("Tipologia Lavoro", fontSize = 16.sp)
-
+                    Text("Tipologia Lavoro", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
                 TextField(
@@ -375,10 +409,20 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // -----------------------------------------
                 // Salva Rapportino + Materiali
                 // -----------------------------------------
-                Button(onClick = {
-                    if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank()) {
 
-                        // 1) Salvo il rapportino
+                // Alert Dialog
+                Alert().CustomAlertDialog(
+                    show = showAlert,
+                    title = "Avviso",
+                    message = alertMessage,
+                    onClose = { showAlert = false }
+                )
+
+                // BUTTON SALVA
+                Button(onClick = {
+                    if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank() && oreLavoro.toDoubleOrNull() != null) {
+
+                        // Salvo il rapportino
                         DatabaseHelper.insertRapportino(
                             nome = nome,
                             ore = oreLavoro.toDouble(),
@@ -386,10 +430,10 @@ fun Activity1Screen(onBack: () -> Unit) {
                             tipologia = clienteSelezionato!!.tipologia
                         )
 
-                        // 2) Recupero ID ultimo rapportino
+                        // Recupero ID ultimo rapportino
                         val idRapportino = DatabaseHelper.getLastRapportinoId()
 
-                        // 3) Salvo materiali usati
+                        // Salvo materiali usati
                         materialiUsati.forEach { (mat, qty) ->
                             DatabaseHelper.insertRapportinoMateriale(
                                 idRapportino,
@@ -398,7 +442,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                             )
                         }
 
-                        message = "Rapportino salvato!"
+                        alertMessage = "Rapportino Salvato!"
+                        showAlert = true
                         nome = ""
                         oreLavoro = ""
                         clienteSelezionato = null
@@ -406,7 +451,9 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                     } else {
 
-                   message = "Compila tutti i campi!"
+                        alertMessage = "Controlla tutti i campi!"
+                        showAlert = true
+
                     }
                 },
                     modifier = Modifier.fillMaxWidth(),
@@ -415,12 +462,12 @@ fun Activity1Screen(onBack: () -> Unit) {
                 )
 
                 {
-                    Text("Salva nel database")
+                    Text("Salva Rapportino")
                 }
 
                 Spacer(Modifier.height(6.dp))
 
-                // BUTTON TORNA AL MENU
+                // BUTTON Torna al Menu
                 Button(onClick = onBack,
                     modifier = Modifier.fillMaxWidth(),
                     border = BorderStroke(1.dp, Color.Gray),
@@ -431,34 +478,64 @@ fun Activity1Screen(onBack: () -> Unit) {
                     Text("Torna al menu")
                 }
 
-                // Messaggio ERRORE/SUCCESSO di Compilazione
-                if (message.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = message,
-                        color = Color.Red,
-                        fontSize = 20.sp
+                Spacer(Modifier.height(6.dp))
+
+                // Alert Dialog per eliminazione Cliente+Dipendenze
+                if (showDeleteConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirm = false },
+                        title = { Text("Conferma eliminazione") },
+                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    clienteSelezionato?.let {
+                                        DatabaseHelper.deleteClienteConRapportini(it.id)
+                                    }
+
+                                    showDeleteConfirm = false
+                                    alertMessage = "Cliente e rapportini eliminati!"
+                                    showAlert = true
+
+                                    // Reset selezione e aggiorna lista
+                                    clienteSelezionato = null
+                                    clienti = DatabaseHelper.getAllClienti()
+                                }
+                            ) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            Button(onClick = { showDeleteConfirm = false }) {
+                                Text("Annulla")
+                            }
+                        }
                     )
                 }
-
-                // Auto HIDE del Messaggio di ERRORE/SUCCESSO
-                LaunchedEffect(message){
-                    if(message.isNotEmpty()){
-                        delay(2500)
-                        message = ""
-                    }
+                // BUTTON Elimina Cliente
+                Button(
+                    onClick = { showDeleteConfirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color.Red,
+                        Color.White,
+                    ),
+                    enabled = clienteSelezionato != null
+                ) {
+                    Text("Elimina Cliente")
                 }
 
                 // Spacer per tenere il button "Aggiungi Materiale" in fondo alla pagina
                 Spacer(Modifier.weight(1f))
 
-                // Quantità
+                // Text Quantità
                 TextField(
                     value = quantita,
-
                     onValueChange = { quantita = it },
                     label = { Text("Quantità", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(quantitaFocusRequester),
                     colors = TextFieldDefaults.textFieldColors(
                         backgroundColor = Color.Transparent
                     ),
@@ -468,11 +545,16 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
 
                 // BUTTON Aggiungi materiale al rapportino
+                val quantitaDouble = quantita.toDoubleOrNull()
+
                 Button(
                     onClick = {
-                        if (selectedMateriale != null && quantita.isNotBlank()) {
-                            materialiUsati = materialiUsati + (selectedMateriale!! to quantita.toDouble())
+                        if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+                            materialiUsati = materialiUsati + (selectedMateriale!! to quantitaDouble)
                             quantita = ""
+                        } else {
+                            alertMessage = "Inserire un Numero nel campo Quantità!"
+                            showAlert = true
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -509,27 +591,27 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Spacer(Modifier.height(20.dp))
 
                 Text("Nome:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = clienteSelezionato?.fullName ?: "—",
-                    fontSize = 16.sp
-                )
+                    Text(
+                        text = clienteSelezionato?.fullName ?: "—",
+                        fontSize = 16.sp
+                    )
 
                 Spacer(Modifier.height(20.dp))
 
                 Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = clienteSelezionato?.tipologia ?: "—",
-                    fontSize = 16.sp
-                )
+                    Text(
+                        text = clienteSelezionato?.tipologia ?: "—",
+                        fontSize = 16.sp
+                    )
 
                 Spacer(Modifier.height(20.dp))
 
                 Text("Totale ore lavorate:", fontSize = 14.sp, color = Color.Gray)
-                Text(
-                    text = "%.2f".format(totaleOre),
-                    fontSize = 18.sp,
-                    color = Color(0xFF4CAF50)
-                )
+                    Text(
+                        text = "%.2f".format(totaleOre),
+                        fontSize = 18.sp,
+                        color = Color(0xFF4CAF50)
+                    )
 
                 Spacer(Modifier.height(30.dp))
 

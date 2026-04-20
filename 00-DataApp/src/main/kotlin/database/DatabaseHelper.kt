@@ -2,6 +2,7 @@ package database
 
 import dataclass.Cliente
 import dataclass.Materiale
+import dataclass.Rapportino
 import java.sql.Connection
 import java.sql.DriverManager
 
@@ -51,6 +52,31 @@ object DatabaseHelper {
                 pstmt.executeUpdate()
             }
         }
+    }
+
+    // Select RAPPORTINO
+    fun getAllRapportini(): List<Rapportino> {
+        val lista = mutableListOf<Rapportino>()
+        val sql = "SELECT * FROM Rapportino"
+
+        connect().use { conn ->
+            conn.createStatement().use { stmt ->
+                val rs = stmt.executeQuery(sql)
+                while (rs.next()) {
+                    lista.add(
+                        Rapportino(
+                            id = rs.getInt("id"),
+                            nome = rs.getString("nome"),
+                            oreLavoro = rs.getDouble("oreLavoro"),
+                            clienteId = rs.getInt("clienteId"),
+                            tipologia = rs.getString("tipologia")
+                        )
+                    )
+                }
+            }
+        }
+
+        return lista
     }
 
     /* CLIENTE */
@@ -320,5 +346,45 @@ object DatabaseHelper {
             }
         }
         return -1 // in caso non ci siano rapportini
+    }
+
+    /* ELIMINA TUTTI I RAPPORTINI E RELATIVE DIPENDENZE */
+
+    // Elimina tutti i RAPPORTINI e relative DIPENDENZE
+    fun deleteClienteConRapportini(clienteId: Int) {
+        connect().use { conn ->
+            conn.autoCommit = false
+            try {
+                // Elimina materiali dei rapportini del cliente
+                conn.prepareStatement("""
+                DELETE FROM RapportinoMateriale 
+                WHERE rapportinoId IN (SELECT id FROM Rapportino WHERE clienteId = ?)
+            """).use { stmt ->
+                    stmt.setInt(1, clienteId)
+                    stmt.executeUpdate()
+                }
+
+                // Elimina rapportini del cliente
+                conn.prepareStatement("""
+                DELETE FROM Rapportino WHERE clienteId = ?
+            """).use { stmt ->
+                    stmt.setInt(1, clienteId)
+                    stmt.executeUpdate()
+                }
+
+                // Elimina cliente
+                conn.prepareStatement("""
+                DELETE FROM Clienti WHERE id = ?
+            """).use { stmt ->
+                    stmt.setInt(1, clienteId)
+                    stmt.executeUpdate()
+                }
+
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
     }
 }
