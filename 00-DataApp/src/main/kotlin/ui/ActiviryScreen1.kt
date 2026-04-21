@@ -104,8 +104,390 @@ fun Activity1Screen(onBack: () -> Unit) {
                 .padding(16.dp),
         ) {
 
+            /* COLONNA SINISTRA DATI RAPPORTINO */
 
-            /* COLONNA SINISTRA CLIENTI */
+            // ---------------------------
+            // COLONNA CENTRALE - DATI LAVORO
+            // ---------------------------
+            Column(modifier = Modifier
+
+                .weight(1f)
+                .padding(horizontal = 10.dp)
+                .padding(end = 10.dp)
+
+            ){
+                // Testo Nome
+                Text("Inserisci Nome", fontSize = 16.sp)
+                // Spacer
+                Spacer(Modifier.height(10.dp))
+
+                BasicTextField(
+                    value = nome,
+                    onValueChange = { nome = it },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Blue   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if (nome.isEmpty()) {
+                            Text(
+                                "Nome",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Testo Ore Lavoro
+                Text("Ore Lavoro", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                BasicTextField(
+                    value = oreLavoro,
+                    onValueChange = { oreLavoro = it },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Blue   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if (oreLavoro.isEmpty()) {
+                            Text(
+                                "Nome",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Testo Cliente
+                Text("Cliente", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                BasicTextField(
+                    value = clienteSelezionato?.fullName ?: "", // Se clienteSelezionato.fullName NON è Null usa quel valore, altrimenti usa la stringa vuota
+                    onValueChange = {  },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Blue   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if ((clienteSelezionato?.fullName ?: "").isEmpty()) {
+                            Text(
+                                "Cliente",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Testo Tipologia Lavoro
+                Text("Tipologia Lavoro", fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+
+                BasicTextField(
+                    value = clienteSelezionato?.tipologia ?: "", // Se clienteSelezionato?.tipologia NON è Null usa quel valore, altrimenti usa la stringa vuota
+                    onValueChange = {  },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 13.sp,
+                        color = Color.Blue   // 🔥 testo visibile
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) { innerTextField ->
+
+                    Box {
+                        // Placeholder
+                        if ((clienteSelezionato?.tipologia ?: "").isEmpty()) {
+                            Text(
+                                "Cliente",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+
+                        // Testo digitato
+                        innerTextField()
+                    }
+                }
+
+                Spacer(Modifier.height(15.dp))
+
+                // -----------------------------------------
+                // Salva Rapportino + Materiali
+                // -----------------------------------------
+
+                // Alert Dialog
+                Alert().CustomAlertDialog(
+                    show = showAlert,
+                    title = "Avviso",
+                    message = alertMessage,
+                    onClose = { showAlert = false }
+                )
+
+                // BUTTON SALVA
+                Button(onClick = {
+                    try {
+                        if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank() && oreLavoro.toDoubleOrNull() != null) {
+
+                            // Salvo il rapportino
+                            DatabaseHelper.insertRapportino(
+                                nome = nome,
+                                ore = oreLavoro.toDouble(),
+                                clienteId = clienteSelezionato!!.id,
+                                tipologia = clienteSelezionato!!.tipologia
+                            )
+
+                            // Recupero ID ultimo rapportino
+                            val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                            // Salvo materiali usati
+                            materialiUsati.forEach { (mat, qty) ->
+                                DatabaseHelper.insertRapportinoMateriale(
+                                    idRapportino,
+                                    mat.id!!,
+                                    qty
+                                )
+                            }
+
+                            alertMessage = "Rapportino Salvato!"
+                            showAlert = true
+                            nome = ""
+                            oreLavoro = ""
+                            clienteSelezionato = null
+                            selectedMateriale = null
+                            materialiUsati = emptyList()
+                            materialiRiepilogo = emptyList()
+
+                        } else {
+
+                            alertMessage = "Controlla tutti i campi!"
+                            showAlert = true
+
+                        }
+                    }catch (e:Exception){
+                        alertMessage = "Errore nel Salvataggio: ${e.message}"
+                        showAlert = true
+                    }
+                },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFFE3F2FD),   // azzurro chiarissimo
+                        Color(0xFF0D47A1)      // blu scuro per il testo
+                    ),
+
+                    )
+
+                {
+                    Text("Salva Rapportino")
+                }
+
+
+                // BUTTON Torna al Menu
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFFE3F2FD),   // azzurro chiarissimo
+                        Color(0xFF0D47A1)      // blu scuro per il testo
+                    ),
+                )
+                {
+                    Text("Torna al menu")
+                }
+
+
+                // Alert Dialog per eliminazione Cliente+Dipendenze
+                if (showDeleteConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirm = false },
+                        title = { Text("Conferma eliminazione") },
+                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    try {
+                                        clienteSelezionato?.let {
+                                            DatabaseHelper.deleteClienteConRapportini(it.id)
+                                        }
+
+                                        showDeleteConfirm = false
+                                        alertMessage = "Cliente e rapportini eliminati!"
+                                        showAlert = true
+
+                                        // Reset selezione e aggiorna lista
+                                        clienteSelezionato = null
+                                        clienti = DatabaseHelper.getAllClienti()
+
+                                    } catch (e: Exception) {
+                                        alertMessage = "Errore nella cancellazione dati: ${e.message}"
+                                        showAlert = true
+                                    }
+                                }
+                            ) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            Button(onClick = { showDeleteConfirm = false }) {
+                                Text("Annulla")
+                            }
+                        }
+                    )
+                }
+
+                // BUTTON Elimina Cliente
+                Button(
+                    onClick = { showDeleteConfirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFFFFEBEE),
+                        Color(0xFFC62828),
+                    ),
+                    enabled = clienteSelezionato != null
+                )
+
+                {
+                    Text("Elimina Cliente")
+                }
+
+                // BUTTON Aggiungi materiale al rapportino
+                val quantitaDouble = quantita.toDoubleOrNull()
+
+                Button(
+                    onClick = {
+                        if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+                            materialiUsati = mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+
+                            quantita = ""
+                        } else {
+                            alertMessage = "Inserire un Numero nel campo Quantità!"
+                            showAlert = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFFE3F2FD),   // azzurro chiarissimo
+                        Color(0xFF0D47A1)      // blu scuro per il testo
+                    ),
+                ) {
+                    Text("Aggiungi materiale")
+                }
+
+                Spacer(Modifier.height(15.dp))
+
+                // Text Quantità
+                TextField(
+                    value = quantita,
+                    onValueChange = { quantita = it },
+                    label = { Text("Quantità", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth().focusRequester(quantitaFocusRequester),
+                    colors = TextFieldDefaults.textFieldColors(
+                        Color(0xFF0D47A1),          // sfondo trasparente
+                        focusedIndicatorColor = Color(0xFF64B5F6),   // azzurro medio (come pulsanti)
+                        unfocusedIndicatorColor = Color(0xFF90CAF9), // azzurro tenue
+                        cursorColor = Color(0xFF0D47A1),             // blu scuro elegante
+                        focusedLabelColor = Color(0xFF0D47A1),       // label blu scuro
+                        unfocusedLabelColor = Color.Gray             // label grigio
+                    ),
+                    singleLine = true,
+                )
+
+                Spacer(Modifier.height(15.dp))
+
+                // -----------------------------------------
+                // MATERIALI DEL NUOVO RAPPORTINO
+                // -----------------------------------------
+                Text(
+                    "Materiali aggiunti ora:",
+                    fontSize = 16.sp)
+
+                Spacer(Modifier.height(10.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .border(1.dp, Color.LightGray)
+                ) {
+                    items(materialiUsati) { (mat, qty) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(3.dp)
+                        ) {
+                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
+                            Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+            }
+
+            // DIVIDER
+            Divider(
+                color = Color(0xFFE0E0E0),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(2.dp)
+            )
+
+            /* FINE COLONNA SINISTRA RAPPORTINO */
+
+
+            /* COLONNA CENTRALE CLIENTI E MATEIRALE */
 
             // ---------------------------
             // COLONNA SINISTRA: CLIENTI (TABELLA + RICERCA)
@@ -291,301 +673,14 @@ fun Activity1Screen(onBack: () -> Unit) {
                     .fillMaxHeight()
                     .width(2.dp)
             )
-            /* FIME COLONNA SINISTRA CLIENTI */
-
-
-
-            /* COLONNA CENTRALE DATI LAVORO */
-
-            // ---------------------------
-            // COLONNA CENTRALE - DATI LAVORO
-            // ---------------------------
-            Column(modifier = Modifier
-
-                .weight(1f)
-                .padding(horizontal = 10.dp)
-                .padding(end = 10.dp)
-
-            ){
-                // Testo Nome
-                Text("Inserisci Nome", fontSize = 16.sp)
-                    // Spacer
-                        Spacer(Modifier.height(10.dp))
-
-                BasicTextField(
-                    value = nome,
-                    onValueChange = { nome = it },
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 13.sp,
-                        color = Color.Black   // 🔥 testo visibile
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                ) { innerTextField ->
-
-                    Box {
-                        // Placeholder
-                        if (nome.isEmpty()) {
-                            Text(
-                                "Nome",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-
-                        // Testo digitato
-                        innerTextField()
-                    }
-                }
-
-                Spacer(Modifier.height(10.dp))
-
-                // Testo Ore Lavoro
-                    Text("Ore Lavoro", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
-
-                BasicTextField(
-                    value = oreLavoro,
-                    onValueChange = { oreLavoro = it },
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 13.sp,
-                        color = Color.Black   // 🔥 testo visibile
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                ) { innerTextField ->
-
-                    Box {
-                        // Placeholder
-                        if (oreLavoro.isEmpty()) {
-                            Text(
-                                "Nome",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-
-                        // Testo digitato
-                        innerTextField()
-                    }
-                }
-
-                Spacer(Modifier.height(10.dp))
-                    Text("Cliente", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
-
-                TextField(
-                    value = clienteSelezionato?.fullName ?: "",
-                    onValueChange = { },
-                    label = { Text("Cliente", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    ),
-                    singleLine = true,
-                    readOnly = true,
-                )
-
-                Spacer(Modifier.height(10.dp))
-                    Text("Tipologia Lavoro", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
-
-                TextField(
-                    value = clienteSelezionato?.tipologia ?: "",
-                    onValueChange = { },
-                    label = { Text("Tipologia Lavoro", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    ),
-                    singleLine = true,
-                    readOnly = true,
-                )
-
-                Spacer(Modifier.height(40.dp))
-
-                // -----------------------------------------
-                // Salva Rapportino + Materiali
-                // -----------------------------------------
-
-                // Alert Dialog
-                Alert().CustomAlertDialog(
-                    show = showAlert,
-                    title = "Avviso",
-                    message = alertMessage,
-                    onClose = { showAlert = false }
-                )
-
-                // BUTTON SALVA
-                Button(onClick = {
-                    if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank() && oreLavoro.toDoubleOrNull() != null) {
-
-                        // Salvo il rapportino
-                        DatabaseHelper.insertRapportino(
-                            nome = nome,
-                            ore = oreLavoro.toDouble(),
-                            clienteId = clienteSelezionato!!.id,
-                            tipologia = clienteSelezionato!!.tipologia
-                        )
-
-                        // Recupero ID ultimo rapportino
-                        val idRapportino = DatabaseHelper.getLastRapportinoId()
-
-                        // Salvo materiali usati
-                        materialiUsati.forEach { (mat, qty) ->
-                            DatabaseHelper.insertRapportinoMateriale(
-                                idRapportino,
-                                mat.id!!,
-                                qty
-                            )
-                        }
-
-                        alertMessage = "Rapportino Salvato!"
-                        showAlert = true
-                        nome = ""
-                        oreLavoro = ""
-                        clienteSelezionato = null
-                        materialiUsati = emptyList()
-
-                    } else {
-
-                        alertMessage = "Controlla tutti i campi!"
-                        showAlert = true
-
-                    }
-                },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                {
-                    Text("Salva Rapportino")
-                }
-
-                Spacer(Modifier.height(6.dp))
-
-                // BUTTON Torna al Menu
-                Button(onClick = onBack,
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),)
-
-
-                {
-                    Text("Torna al menu")
-                }
-
-                Spacer(Modifier.height(6.dp))
-
-                // Alert Dialog per eliminazione Cliente+Dipendenze
-                if (showDeleteConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text("Conferma eliminazione") },
-                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    clienteSelezionato?.let {
-                                        DatabaseHelper.deleteClienteConRapportini(it.id)
-                                    }
-
-                                    showDeleteConfirm = false
-                                    alertMessage = "Cliente e rapportini eliminati!"
-                                    showAlert = true
-
-                                    // Reset selezione e aggiorna lista
-                                    clienteSelezionato = null
-                                    clienti = DatabaseHelper.getAllClienti()
-                                }
-                            ) {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            Button(onClick = { showDeleteConfirm = false }) {
-                                Text("Annulla")
-                            }
-                        }
-                    )
-                }
-                // BUTTON Elimina Cliente
-                Button(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color.Red,
-                        Color.White,
-                    ),
-                    enabled = clienteSelezionato != null
-                ) {
-                    Text("Elimina Cliente")
-                }
-
-                // Spacer per tenere il button "Aggiungi Materiale" in fondo alla pagina
-                Spacer(Modifier.weight(1f))
-
-                // Text Quantità
-                TextField(
-                    value = quantita,
-                    onValueChange = { quantita = it },
-                    label = { Text("Quantità", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth().focusRequester(quantitaFocusRequester),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    ),
-                    singleLine = true,
-                )
-
-                Spacer(Modifier.height(10.dp))
-
-                // BUTTON Aggiungi materiale al rapportino
-                val quantitaDouble = quantita.toDoubleOrNull()
-
-                Button(
-                    onClick = {
-                        if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                            materialiUsati = mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
-
-                            quantita = ""
-                        } else {
-                            alertMessage = "Inserire un Numero nel campo Quantità!"
-                            showAlert = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Aggiungi materiale")
-                }
-            }
-
-            // DIVIDER
-            Divider(
-                color = Color(0xFFE0E0E0),
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-            )
-
-            /* FINE COLONNA CENTRALE DATI LAVORO */
+            /* FIME COLONNA SINISTRA CLIENTI E MATERIALE */
 
 
             /* COLONNA DESTRA RIEPILOGO */
 
             // ---------------------------
-// COLONNA DESTRA: RIEPILOGO CLIENTI
-// ---------------------------
+            // COLONNA DESTRA: RIEPILOGO CLIENTI
+            // ---------------------------
             Column(
                 modifier = Modifier
                     .weight(0.6f)
@@ -624,7 +719,10 @@ fun Activity1Screen(onBack: () -> Unit) {
                 // -----------------------------------------
                 // RIEPILOGO MATERIALE USATO (STORICO)
                 // -----------------------------------------
-                Text("Materiali utilizzati (storico):", fontSize = 16.sp)
+                Text(
+                    "Materiali utilizzati (storico):",
+                    fontSize = 16.sp)
+
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
@@ -645,31 +743,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                     }
                 }
 
-                Spacer(Modifier.height(30.dp))
+               // Spacer(Modifier.height(30.dp))
 
-                // -----------------------------------------
-                // MATERIALI DEL NUOVO RAPPORTINO
-                // -----------------------------------------
-                Text("Materiali aggiunti ora:", fontSize = 16.sp, color = Color(0xFF2196F3))
-                Spacer(Modifier.height(10.dp))
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .border(1.dp, Color.Gray)
-                ) {
-                    items(materialiUsati) { (mat, qty) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(3.dp)
-                        ) {
-                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
-                            Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
-                        }
-                    }
-                }
             }
             /* FINE COLONNA DESTRA RIEPILOGO */
         } // chiusura ROW
