@@ -43,9 +43,11 @@ import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
@@ -356,14 +358,17 @@ fun Activity1Screen(onBack: () -> Unit) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = "Salva Rapportino",
-                                tint = Color(0xFF0D47A1)   // blu scuro elegante
+                                tint = if(clienteSelezionato != null)
+                                    Color(0xFF0D47A1)   // blu scuro elegante
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
                             )
 
                             Text(
                                 "Salva",
                                 fontSize = 10.sp,
                                 color = if (clienteSelezionato != null)
-                                    Color(0xFF1B5E20)
+                                    Color(0xFF0D47A1)
                                 else
                                     Color.Gray.copy(alpha = 0.4f)
                             )
@@ -409,6 +414,38 @@ fun Activity1Screen(onBack: () -> Unit) {
                         }
                     }
 
+                    // ICONA ELIMINA CLIENTE
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        enabled = clienteSelezionato != null
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Elimina Cliente",
+                                tint = if (clienteSelezionato != null)
+                                    Color(0xFFC62828)   // rosso scuro elegante
+                                else
+                                    Color.Gray.copy(alpha = 0.4f) // disattivato
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Elimina Cliente",
+                                fontSize = 10.sp,
+                                color = if (clienteSelezionato != null)
+                                    Color(0xFFC62828)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
+
                     // ICONA TORNA AL MENU
                     IconButton(
                         onClick = onBack
@@ -433,98 +470,122 @@ fun Activity1Screen(onBack: () -> Unit) {
                             )
                         }
                     }
-                }
 
 
+                    // Alert Dialog per eliminazione Cliente+Dipendenze
+                    if (showDeleteConfirm) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteConfirm = false },
+                            title = { Text("Conferma eliminazione") },
+                            text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        try {
+                                            clienteSelezionato?.let {
+                                                DatabaseHelper.deleteClienteConRapportini(it.id)
+                                            }
 
+                                            showDeleteConfirm = false
+                                            alertMessage = "Cliente e rapportini eliminati!"
+                                            showAlert = true
 
-                // Alert Dialog per eliminazione Cliente+Dipendenze
-                if (showDeleteConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text("Conferma eliminazione") },
-                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    try {
-                                        clienteSelezionato?.let {
-                                            DatabaseHelper.deleteClienteConRapportini(it.id)
+                                            // Reset selezione e aggiorna lista
+                                            clienteSelezionato = null
+                                            clienti = DatabaseHelper.getAllClienti()
+
+                                        } catch (e: Exception) {
+                                            alertMessage = "Errore nella cancellazione dati: ${e.message}"
+                                            showAlert = true
                                         }
-
-                                        showDeleteConfirm = false
-                                        alertMessage = "Cliente e rapportini eliminati!"
-                                        showAlert = true
-
-                                        // Reset selezione e aggiorna lista
-                                        clienteSelezionato = null
-                                        clienti = DatabaseHelper.getAllClienti()
-
-                                    } catch (e: Exception) {
-                                        alertMessage = "Errore nella cancellazione dati: ${e.message}"
-                                        showAlert = true
                                     }
+                                ) {
+                                    Text("OK")
                                 }
-                            ) {
-                                Text("OK")
+                            },
+                            dismissButton = {
+                                Button(onClick = { showDeleteConfirm = false }) {
+                                    Text("Annulla")
+                                }
                             }
-                        },
-                        dismissButton = {
-                            Button(onClick = { showDeleteConfirm = false }) {
-                                Text("Annulla")
+                        )
+                    }
+
+                    // ICONA ANNULLA SELEZIONE CLIENTE
+                    IconButton(
+                        onClick = {
+
+                            nome = ""
+                            oreLavoro = ""
+                            clienteSelezionato = null
+                            selectedMateriale = null
+                            materialiUsati = emptyList()
+                            materialiRiepilogo = emptyList()
+                            totaleOre = 0.0
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Annulla Selezione",
+                                tint = Color(0xFF64B5F6)   // azzurro medio
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Annulla Selezione Cliente",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
+                        }
+                    }
+
+                    // BUTTON Aggiungi materiale
+                    val quantitaDouble = quantita.toDoubleOrNull()
+
+                    IconButton(
+                        onClick = {
+                            if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+                                materialiUsati =
+                                    mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+
+                                quantita = ""
+                                selectedMateriale = null   // 🔥 reset selezione tabella
+                            } else {
+                                alertMessage = "Inserire un Numero nel campo Quantità!"
+                                showAlert = true
                             }
                         }
-                    )
-                }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
 
-                // BUTTON Elimina Cliente
-                Button(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFFFFEBEE),
-                        Color(0xFFC62828),
-                    ),
-                    enabled = clienteSelezionato != null
-                )
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Aggiungi materiale",
+                                tint = Color(0xFF64B5F6)   // blu scuro elegante
+                            )
 
-                {
-                    Text("Elimina Cliente")
-                }
+                            Spacer(modifier = Modifier.height(2.dp))
 
-
-                // BUTTON Aggiungi materiale al rapportino
-                val quantitaDouble = quantita.toDoubleOrNull()
-
-                Button(
-                    onClick = {
-                        if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                            materialiUsati = mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
-
-                            quantita = ""
-                        } else {
-                            alertMessage = "Inserire un Numero nel campo Quantità!"
-                            showAlert = true
+                            Text(
+                                "Aggiungi Materiale",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFF90CAF9),   // blu chiarissimo
-                        contentColor = Color(0xFF0D47A1)      // testo blu scuro
-                    ),
-                ) {
-                    Text("Aggiungi materiale")
+                    }
+
                 }
 
-                Spacer(Modifier.height(15.dp))
-
-
-
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(10.dp))
 
                 // -----------------------------------------
                 // MATERIALI DEL NUOVO RAPPORTINO
@@ -663,57 +724,68 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // Text Quantità
-                TextField(
-                    value = quantita,
-                    onValueChange = { quantita = it },
-                    label = { Text("Quantità", fontSize = 12.sp) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(quantitaFocusRequester)
-                        .onKeyEvent { event ->
-                            val quantitaDouble = quantita.toDoubleOrNull()
 
-                            if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
 
-                                if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-
-                                    // Aggiunge materiale come il bottone
-                                    materialiUsati = mergeMateriali(
-                                        materialiUsati + (selectedMateriale!! to quantitaDouble)
-                                    )
-
-                                    quantita = ""
-
-                                    // Riporta il focus al campo quantità (molto comodo)
-                                    quantitaFocusRequester.requestFocus()
-
-                                } else {
-                                    alertMessage = "Inserire un Numero nel campo Quantità!"
-                                    showAlert = true
-                                }
-
-                                true  // evento gestito
-                            } else {
-                                false // evento non gestito
-                            }
-                        },
-                    colors = TextFieldDefaults.textFieldColors(
-                        Color.Blue,          // sfondo trasparente
-                        focusedIndicatorColor = Color(0xFF64B5F6),   // azzurro medio
-                        unfocusedIndicatorColor = Color(0xFF90CAF9), // azzurro tenue
-                        cursorColor = Color(0xFF0D47A1),             // blu scuro elegante
-                        focusedLabelColor = Color(0xFF0D47A1),       // label blu scuro
-                        unfocusedLabelColor = Color.Gray             // label grigio
-                    ),
-                    singleLine = true,
-                )
+                Spacer(Modifier.height(10.dp))
 
                 // -----------------------------------------
                 // TABELLA MATERIALE
                 // -----------------------------------------
 
-                Text("Materiale", fontSize = 16.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Etichetta Materiale
+                    Text(
+                        "Materiale", fontSize = 16.sp
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // 🔹 Campo Quantità piccolo e a destra
+                    TextField(
+                        value = quantita,
+                        onValueChange = { quantita = it },
+                        label = { Text("Quantità", fontSize = 12.sp, modifier = Modifier.padding(start = 0.dp)) },
+                        modifier = Modifier
+                            .width(150.dp)   // 🔥 più piccolo
+                            .focusRequester(quantitaFocusRequester)
+                            .onKeyEvent { event ->
+                                val quantitaDouble = quantita.toDoubleOrNull()
+
+                                if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
+                                    if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+
+                                        materialiUsati = mergeMateriali(
+                                            materialiUsati + (selectedMateriale!! to quantitaDouble)
+                                        )
+
+                                        quantita = ""
+                                        selectedMateriale = null
+                                        quantitaFocusRequester.requestFocus()
+
+                                    } else {
+                                        alertMessage = "Inserire un Numero nel campo Quantità!"
+                                        showAlert = true
+                                    }
+                                    true
+                                } else false
+                            }
+                            .padding(start = 20.dp),
+
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = Color.Transparent,
+                            focusedIndicatorColor = Color(0xFF64B5F6),
+                            unfocusedIndicatorColor = Color(0xFF90CAF9),
+                            cursorColor = Color(0xFF0D47A1),
+                            focusedLabelColor = Color(0xFF0D47A1),
+                            unfocusedLabelColor = Color.Gray
+                        ),
+                        singleLine = true
+                    )
+                }
+
                 Spacer(Modifier.height(10.dp))
 
                 // Barra di Ricerca Materiale
@@ -863,7 +935,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                   materiale.prezzo * quantita
                 }
 
-                Text("Totale Materiali:", fontSize = 14.sp, color = Color.Gray)
+                Text("Conteggio Materiali:", fontSize = 14.sp, color = Color.Gray)
 
                 Text(
                     text = "%.2f €".format(totaleMateriali),
