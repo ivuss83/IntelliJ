@@ -114,14 +114,21 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
             Text("Salva")
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(10.dp))
 
         // TORNA AL MENU
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors( Color.Gray)
-        ) {
+            border = BorderStroke(1.dp, Color.Gray),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                Color(0xFF1976D2),   // blu deciso
+                contentColor = Color.White            // testo bianco
+            ),
+        )
+
+        {
             Text("Torna al menu")
         }
 

@@ -108,7 +108,7 @@ fun App(windowState: WindowState) {
             Screen.IMPOSTAZIONI -> {
                 LaunchedEffect(Unit) {
                     windowState.placement = WindowPlacement.Floating
-                    windowState.size = DpSize(600.dp, 400.dp)
+                    windowState.size = DpSize(700.dp, 500.dp)
                     windowState.position = WindowPosition.Aligned(Alignment.Center)
                 }
 
