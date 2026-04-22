@@ -10,10 +10,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -106,37 +111,76 @@ fun MaterialeActivity(
             )
 
             // Button Salva
-            Button(
-                onClick = {
-                    if (marca.isNotBlank() && modello.isNotBlank() && codice.isNotBlank() && prezzo.isNotBlank()) {
-                        DatabaseHelper.insertMateriale(
-                            marca,
-                            modello,
-                            codice,
-                            prezzo.toDoubleOrNull() ?: 0.0
-                        )
-                        listaMateriali = DatabaseHelper.getAllMateriale()
 
-                        // pulizia campi
-                        marca = ""
-                        modello = ""
-                        codice = ""
-                        prezzo = ""
-                    } else {
-                        alertMessage = "Compila tutti i campi!"
-                        showAlert = true
-                    }
-                },
-                modifier = Modifier.width(300.dp),
-                border = BorderStroke(1.dp, Color.Gray),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    Color(0xFF1976D2),   // blu deciso
-                    contentColor = Color.White            // testo bianco
-                )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Salva Materiale")
+
+                // ICONA SALVA MATERIALE
+                IconButton(
+                    onClick = {
+                        try {
+                            if (
+                                marca.isNotBlank() &&
+                                modello.isNotBlank() &&
+                                codice.isNotBlank() &&
+                                prezzo.isNotBlank()
+                            ) {
+
+                                DatabaseHelper.insertMateriale(
+                                    marca,
+                                    modello,
+                                    codice,
+                                    prezzo.toDoubleOrNull() ?: 0.0
+                                )
+
+                                listaMateriali = DatabaseHelper.getAllMateriale()
+
+                                // pulizia campi
+                                marca = ""
+                                modello = ""
+                                codice = ""
+                                prezzo = ""
+
+                                alertMessage = "Materiale Salvato!"
+                                showAlert = true
+
+                            } else {
+                                alertMessage = "Compila tutti i campi!"
+                                showAlert = true
+                            }
+                        } catch (e: Exception) {
+                            alertMessage = "Errore nel Salvataggio: ${e.message}"
+                            showAlert = true
+                        }
+                    }
+                ) {
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = "Salva Materiale",
+                            tint =  Color(0xFF0D47A1)
+                        )
+
+                        Text(
+                            "Salva",
+                            fontSize = 10.sp,
+                            color = Color(0xFF0D47A1)
+                        )
+                    }
+                }
+
+                // QUI puoi aggiungere le altre icone
+                // IconButton { ... }
+                // IconButton { ... }
             }
+
 
             Spacer(Modifier.height(10.dp))
 
