@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -31,6 +32,8 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.OutlinedTextField
@@ -38,22 +41,40 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import database.DatabaseHelper
 import dataclass.Cliente
+import dataclass.Impostazioni
 import dataclass.Materiale
 import dataclass.Rapportino
+import printdata.generaPdf
 
 @Composable
 fun Activity1Screen(onBack: () -> Unit) {
@@ -113,11 +134,11 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 .weight(1f)
                 .padding(horizontal = 10.dp)
-                .padding(end = 10.dp)
+                //.padding(end = 10.dp)
 
             ){
                 // Testo Nome
-                Text("Inserisci Nome", fontSize = 16.sp)
+                Text("Nome", fontSize = 16.sp)
                 // Spacer
                 Spacer(Modifier.height(10.dp))
 
@@ -174,7 +195,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                         // Placeholder
                         if (oreLavoro.isEmpty()) {
                             Text(
-                                "Nome",
+                                "Ore lavoro",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -244,7 +265,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                         // Placeholder
                         if ((clienteSelezionato?.tipologia ?: "").isEmpty()) {
                             Text(
-                                "Cliente",
+                                "Tipologia lavoro",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -269,80 +290,152 @@ fun Activity1Screen(onBack: () -> Unit) {
                     onClose = { showAlert = false }
                 )
 
-                // BUTTON SALVA
-                Button(onClick = {
-                    try {
-                        if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank() && oreLavoro.toDoubleOrNull() != null) {
+                // RIGA ICONE
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
 
-                            // Salvo il rapportino
-                            DatabaseHelper.insertRapportino(
-                                nome = nome,
-                                ore = oreLavoro.toDouble(),
-                                clienteId = clienteSelezionato!!.id,
-                                tipologia = clienteSelezionato!!.tipologia
+                    // ICONA SALVA
+                    IconButton(
+                        onClick = {
+                            try {
+                                if (clienteSelezionato != null &&
+                                    nome.isNotBlank() &&
+                                    oreLavoro.isNotBlank() &&
+                                    oreLavoro.toDoubleOrNull() != null
+                                ) {
+
+                                    // Salvo il rapportino
+                                    DatabaseHelper.insertRapportino(
+                                        nome = nome,
+                                        ore = oreLavoro.toDouble(),
+                                        clienteId = clienteSelezionato!!.id,
+                                        tipologia = clienteSelezionato!!.tipologia
+                                    )
+
+                                    // Recupero ID ultimo rapportino
+                                    val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                                    // Salvo materiali usati
+                                    materialiUsati.forEach { (mat, qty) ->
+                                        DatabaseHelper.insertRapportinoMateriale(
+                                            idRapportino,
+                                            mat.id!!,
+                                            qty
+                                        )
+                                    }
+
+                                    alertMessage = "Rapportino Salvato!"
+                                    showAlert = true
+
+                                    nome = ""
+                                    oreLavoro = ""
+                                    clienteSelezionato = null
+                                    selectedMateriale = null
+                                    materialiUsati = emptyList()
+                                    materialiRiepilogo = emptyList()
+
+                                } else {
+                                    alertMessage = "Controlla tutti i campi!"
+                                    showAlert = true
+                                }
+                            } catch (e: Exception) {
+                                alertMessage = "Errore nel Salvataggio: ${e.message}"
+                                showAlert = true
+                            }
+                        }
+                    ) {
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = "Salva Rapportino",
+                                tint = Color(0xFF0D47A1)   // blu scuro elegante
                             )
 
-                            // Recupero ID ultimo rapportino
-                            val idRapportino = DatabaseHelper.getLastRapportinoId()
+                            Text(
+                                "Salva",
+                                fontSize = 10.sp,
+                                color = if (clienteSelezionato != null)
+                                    Color(0xFF1B5E20)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
 
-                            // Salvo materiali usati
-                            materialiUsati.forEach { (mat, qty) ->
-                                DatabaseHelper.insertRapportinoMateriale(
-                                    idRapportino,
-                                    mat.id!!,
-                                    qty
+                    // ICONA STAMPA PDF
+                    IconButton(
+                        onClick = {
+                            if (clienteSelezionato != null) {
+                                generaPdf(
+                                    cliente = clienteSelezionato!!,
+                                    totaleOre = totaleOre,
+                                    tariffaOraria = DatabaseHelper.getImpostazioni().tariffaOraria,
+                                    materialiRiepilogo = materialiRiepilogo
                                 )
                             }
+                        },
+                        enabled = clienteSelezionato != null
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
 
-                            alertMessage = "Rapportino Salvato!"
-                            showAlert = true
-                            nome = ""
-                            oreLavoro = ""
-                            clienteSelezionato = null
-                            selectedMateriale = null
-                            materialiUsati = emptyList()
-                            materialiRiepilogo = emptyList()
+                            Icon(
+                                imageVector = Icons.Default.Create,
+                                contentDescription = "Stampa PDF",
+                                tint = if (clienteSelezionato != null)
+                                    Color(0xFF1B5E20)     // verde scuro attivo
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)  // disattivato
+                            )
 
-                        } else {
-
-                            alertMessage = "Controlla tutti i campi!"
-                            showAlert = true
-
+                            Text(
+                                "Stampa PDF",
+                                fontSize = 10.sp,
+                                color = if (clienteSelezionato != null)
+                                    Color(0xFF1B5E20)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
                         }
-                    }catch (e:Exception){
-                        alertMessage = "Errore nel Salvataggio: ${e.message}"
-                        showAlert = true
                     }
-                },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFFE3F2FD),   // azzurro chiarissimo
-                        Color(0xFF0D47A1)      // blu scuro per il testo
-                    ),
 
-                    )
+                    // ICONA TORNA AL MENU
+                    IconButton(
+                        onClick = onBack
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
 
-                {
-                    Text("Salva Rapportino")
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Torna al menu",
+                                tint = Color(0xFF64B5F6)   // azzurro medio
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Menu",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
+                        }
+                    }
                 }
 
 
-                // BUTTON Torna al Menu
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFFE3F2FD),   // azzurro chiarissimo
-                        Color(0xFF0D47A1)      // blu scuro per il testo
-                    ),
-                )
-                {
-                    Text("Torna al menu")
-                }
 
 
                 // Alert Dialog per eliminazione Cliente+Dipendenze
@@ -401,6 +494,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                     Text("Elimina Cliente")
                 }
 
+
                 // BUTTON Aggiungi materiale al rapportino
                 val quantitaDouble = quantita.toDoubleOrNull()
 
@@ -419,8 +513,8 @@ fun Activity1Screen(onBack: () -> Unit) {
                     border = BorderStroke(1.dp, Color.Gray),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        Color(0xFFE3F2FD),   // azzurro chiarissimo
-                        Color(0xFF0D47A1)      // blu scuro per il testo
+                        Color(0xFF90CAF9),   // blu chiarissimo
+                        contentColor = Color(0xFF0D47A1)      // testo blu scuro
                     ),
                 ) {
                     Text("Aggiungi materiale")
@@ -428,22 +522,7 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(15.dp))
 
-                // Text Quantità
-                TextField(
-                    value = quantita,
-                    onValueChange = { quantita = it },
-                    label = { Text("Quantità", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth().focusRequester(quantitaFocusRequester),
-                    colors = TextFieldDefaults.textFieldColors(
-                        Color(0xFF0D47A1),          // sfondo trasparente
-                        focusedIndicatorColor = Color(0xFF64B5F6),   // azzurro medio (come pulsanti)
-                        unfocusedIndicatorColor = Color(0xFF90CAF9), // azzurro tenue
-                        cursorColor = Color(0xFF0D47A1),             // blu scuro elegante
-                        focusedLabelColor = Color(0xFF0D47A1),       // label blu scuro
-                        unfocusedLabelColor = Color.Gray             // label grigio
-                    ),
-                    singleLine = true,
-                )
+
 
                 Spacer(Modifier.height(15.dp))
 
@@ -459,6 +538,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
@@ -497,7 +577,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 modifier = Modifier
                     .weight(1.4f)
                     .padding(horizontal = 10.dp)
-                    .padding(end = 10.dp)
+                    //.padding(end = 10.dp)
                     // .background(Color(0xFFF7F7F7)) // grigio chiarissimo
             ) {
 
@@ -581,7 +661,53 @@ fun Activity1Screen(onBack: () -> Unit) {
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(10.dp))
+
+                // Text Quantità
+                TextField(
+                    value = quantita,
+                    onValueChange = { quantita = it },
+                    label = { Text("Quantità", fontSize = 12.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(quantitaFocusRequester)
+                        .onKeyEvent { event ->
+                            val quantitaDouble = quantita.toDoubleOrNull()
+
+                            if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
+
+                                if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+
+                                    // Aggiunge materiale come il bottone
+                                    materialiUsati = mergeMateriali(
+                                        materialiUsati + (selectedMateriale!! to quantitaDouble)
+                                    )
+
+                                    quantita = ""
+
+                                    // Riporta il focus al campo quantità (molto comodo)
+                                    quantitaFocusRequester.requestFocus()
+
+                                } else {
+                                    alertMessage = "Inserire un Numero nel campo Quantità!"
+                                    showAlert = true
+                                }
+
+                                true  // evento gestito
+                            } else {
+                                false // evento non gestito
+                            }
+                        },
+                    colors = TextFieldDefaults.textFieldColors(
+                        Color.Blue,          // sfondo trasparente
+                        focusedIndicatorColor = Color(0xFF64B5F6),   // azzurro medio
+                        unfocusedIndicatorColor = Color(0xFF90CAF9), // azzurro tenue
+                        cursorColor = Color(0xFF0D47A1),             // blu scuro elegante
+                        focusedLabelColor = Color(0xFF0D47A1),       // label blu scuro
+                        unfocusedLabelColor = Color.Gray             // label grigio
+                    ),
+                    singleLine = true,
+                )
 
                 // -----------------------------------------
                 // TABELLA MATERIALE
@@ -673,7 +799,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                     .fillMaxHeight()
                     .width(2.dp)
             )
-            /* FIME COLONNA SINISTRA CLIENTI E MATERIALE */
+            /* FIME COLONNA CENTRALE CLIENTI E MATERIALE */
 
 
             /* COLONNA DESTRA RIEPILOGO */
@@ -691,25 +817,69 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Text("Riepilogo Cliente", fontSize = 18.sp)
                 Spacer(Modifier.height(20.dp))
 
+                // Nome CLiente
                 Text("Nome:", fontSize = 14.sp, color = Color.Gray)
                 Text(
                     text = clienteSelezionato?.fullName ?: "—",
                     fontSize = 16.sp
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(10.dp))
 
+                // Tipologia Cantiere
                 Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
                 Text(
                     text = clienteSelezionato?.tipologia ?: "—",
                     fontSize = 16.sp
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(10.dp))
 
-                Text("Totale ore lavorate:", fontSize = 14.sp, color = Color.Gray)
+                // Totale ORE lavorate
+                Text("Totale Ore Lavorate:", fontSize = 14.sp, color = Color.Gray)
                 Text(
                     text = "%.2f".format(totaleOre),
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Conteggio ORE
+                val orelavorateValore = DatabaseHelper.getImpostazioni()
+                val tariffaOraria = orelavorateValore.tariffaOraria
+
+                Text("Conteggio Ore:", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = "%.2f €".format(totaleOre * tariffaOraria),
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Conteggio Valore Materiale
+                var totaleMateriali = materialiRiepilogo.sumOf { (materiale,  quantita) ->
+                  materiale.prezzo * quantita
+                }
+
+                Text("Totale Materiali:", fontSize = 14.sp, color = Color.Gray)
+
+                Text(
+                    text = "%.2f €".format(totaleMateriali),
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Conteggio Totale Ore + Materiale
+                var totaleAssoluto = totaleMateriali + (totaleOre * tariffaOraria)
+
+                Text("Totale:", fontSize = 14.sp, color = Color.Gray)
+
+                Text(
+                    text = "%.2f €".format(totaleAssoluto),
                     fontSize = 18.sp,
                     color = Color(0xFF4CAF50)
                 )
@@ -728,6 +898,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {

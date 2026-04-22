@@ -1,8 +1,10 @@
 package ui
 
 import alertDialog.Alert
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -100,8 +102,15 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
                 }
             },
-            modifier = Modifier.fillMaxWidth()
-        ) {
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, Color.Gray),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                Color(0xFF1976D2),   // blu deciso
+                contentColor = Color.White            // testo bianco
+            ),
+        )
+        {
             Text("Salva")
         }
 

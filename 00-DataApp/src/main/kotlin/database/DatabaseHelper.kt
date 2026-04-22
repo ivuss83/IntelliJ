@@ -287,7 +287,9 @@ object DatabaseHelper {
         val result = mutableListOf<Pair<Materiale, Double>>()
 
         val sql = """
-        SELECT m.*, SUM(rm.quantita) AS totaleQuantita
+        SELECT m.*,
+         SUM(rm.quantita) AS totaleQuantita,
+         SUM(rm.quantita * m.prezzo) AS valoreTotale
         FROM RapportinoMateriale rm
         JOIN Materiale m ON m.id = rm.materialeId
         JOIN Rapportino r ON r.id = rm.rapportinoId

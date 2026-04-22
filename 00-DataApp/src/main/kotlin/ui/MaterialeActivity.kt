@@ -1,11 +1,15 @@
 package ui
 
+import alertDialog.Alert
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -37,6 +41,9 @@ fun MaterialeActivity(
 
     // --- Stato ricerca ---
     var searchQuery by remember { mutableStateOf("") }
+
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
 
     val materialiFiltrati = listaMateriali.filter {
         it.marca.contains(searchQuery, ignoreCase = true) ||
@@ -90,6 +97,14 @@ fun MaterialeActivity(
 
             Spacer(Modifier.height(10.dp))
 
+            // Alert Dialog
+            Alert().CustomAlertDialog(
+                show = showAlert,
+                title = "Avviso",
+                message = alertMessage,
+                onClose = { showAlert = false }
+            )
+
             // Button Salva
             Button(
                 onClick = {
@@ -107,8 +122,18 @@ fun MaterialeActivity(
                         modello = ""
                         codice = ""
                         prezzo = ""
+                    } else {
+                        alertMessage = "Compila tutti i campi!"
+                        showAlert = true
                     }
-                }, modifier = Modifier.width(300.dp)
+                },
+                modifier = Modifier.width(300.dp),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                )
             ) {
                 Text("Salva Materiale")
             }
@@ -134,7 +159,14 @@ fun MaterialeActivity(
                         codice = ""
                         prezzo = ""
 
-                    } ,modifier = Modifier.width(300.dp)
+                    } ,
+                    modifier = Modifier.width(300.dp),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFF1976D2),   // blu deciso
+                        contentColor = Color.White            // testo bianco
+                    )
                 ) {
                     Text("Aggiorna Materiale")
                 }
@@ -153,7 +185,15 @@ fun MaterialeActivity(
                         codice = ""
                         prezzo = ""
 
-                    }, modifier = Modifier.width(300.dp)
+                    },
+
+                    modifier = Modifier.width(300.dp),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFF1976D2),   // blu deciso
+                        contentColor = Color.White            // testo bianco
+                    )
 
                 ) {
                     Text("Elimina Materiale")
@@ -163,7 +203,14 @@ fun MaterialeActivity(
 
             // Button torna al menu
             Button(onClick = onBackToMenu,
-                modifier = Modifier.width(300.dp))
+                modifier = Modifier.width(300.dp),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                )
+            )
             {
                 Text("Torna al Menu")
             }

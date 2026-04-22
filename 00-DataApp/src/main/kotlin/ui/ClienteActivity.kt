@@ -1,5 +1,7 @@
 package ui
 
+import alertDialog.Alert
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -37,6 +41,9 @@ fun ClienteActivity(
 
     var errorMessage by remember { mutableStateOf("") }
 
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
+
 
     Box(
         modifier = Modifier.fillMaxSize().padding(20.dp)
@@ -58,7 +65,7 @@ fun ClienteActivity(
                 value = nome,
                 onValueChange = { nome = it },
                 label = { Text("Nome", fontSize = 12.sp) },
-                modifier = Modifier.width(250.dp),
+                modifier = Modifier.width(300.dp),
                 singleLine = true
             )
 
@@ -69,7 +76,7 @@ fun ClienteActivity(
                 value = cognome,
                 onValueChange = { cognome = it },
                 label = { Text("Cognome", fontSize = 12.sp) },
-                modifier = Modifier.width(250.dp),
+                modifier = Modifier.width(300.dp),
                 singleLine = true
             )
 
@@ -80,7 +87,7 @@ fun ClienteActivity(
                 value = tipologia,
                 onValueChange = { tipologia = it },
                 label = { Text("Tipologia lavoro", fontSize = 12.sp) },
-                modifier = Modifier.width(250.dp),
+                modifier = Modifier.width(300.dp),
                 singleLine = true
             )
 
@@ -98,16 +105,32 @@ fun ClienteActivity(
             onClick = onBackToMenu,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(10.dp)
+                .width(300.dp)
+                .padding(10.dp),
+            border = BorderStroke(1.dp, Color.Gray),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                Color(0xFF1976D2),   // blu deciso
+                contentColor = Color.White            // testo bianco
+            )
         ) {
             Text("Torna al menu")
         }
+
+        // Alert Dialog
+        Alert().CustomAlertDialog(
+            show = showAlert,
+            title = "Avviso",
+            message = alertMessage,
+            onClose = { showAlert = false }
+        )
 
         // Pulsante + (in basso a destra)
         FloatingActionButton(
             onClick = {
                 if(nome.isEmpty() || cognome.isEmpty() || tipologia.isEmpty()) {
-                    errorMessage = "Compila tutti i campi!"
+                    alertMessage = "Compila tutti i Campi!"
+                    showAlert = true
                 } else {
                     onAddCliente(nome, cognome, tipologia)
                     nome = ""
@@ -118,7 +141,9 @@ fun ClienteActivity(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(10.dp)
+                .padding(10.dp),
+            backgroundColor = Color(0xFF90CAF9),
+            contentColor = Color.White
         ) {
             Text("+")
         }

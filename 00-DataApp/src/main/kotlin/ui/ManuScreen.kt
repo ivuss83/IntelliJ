@@ -1,5 +1,6 @@
 package ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,11 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -38,21 +42,60 @@ fun MenuScreen(onActivity1: () -> Unit,
                 softWrap = false,
                 textAlign = TextAlign.Center
                 )
-            Spacer(Modifier.height(16.dp))
 
-            Button(onClick = onActivity1, modifier = Modifier.fillMaxWidth()) {
+
+            Button(onClick = onActivity1,
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                ),
+                )
+            {
                 Text("Compila")
             }
 
-            Button(onClick = onClienti, modifier = Modifier.fillMaxWidth()) {
+
+            Button(onClick = onClienti,
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                )
+            )
+            {
                 Text("Clienti")
             }
 
-            Button(onClick = onMateriale, modifier = Modifier.fillMaxWidth()) {
+
+            Button(onClick = onMateriale,
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                )
+            )
+            {
                 Text("Materiale")
             }
 
-            Button(onClick = onImpostazioni, modifier = Modifier.fillMaxWidth()) {
+
+            Button(onClick = onImpostazioni,
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF1976D2),   // blu deciso
+                    contentColor = Color.White            // testo bianco
+                )
+            )
+            {
                 Text("Impostazioni")
             }
 
