@@ -9,6 +9,7 @@ import com.lowagie.text.Rectangle
 import com.lowagie.text.pdf.PdfPCell
 import com.lowagie.text.pdf.PdfPTable
 import com.lowagie.text.pdf.PdfWriter
+import database.DatabaseHelper
 import dataclass.Cliente
 import dataclass.Materiale
 import java.awt.FileDialog
@@ -109,9 +110,10 @@ fun generaPdf(
 
 // Totale materiali
     var totaleMateriali = 0.0
+    val rincaroMateriale = DatabaseHelper.getImpostazioni()
 
     materialiRiepilogo.forEach { (materiale, quantita) ->
-        val totale = materiale.prezzo * quantita
+        val totale = materiale.prezzo * quantita * (1 + rincaroMateriale.rincaroMateriale / 100)
         totaleMateriali += totale
 
         tabMat.addCell("${materiale.marca} ${materiale.modello}")

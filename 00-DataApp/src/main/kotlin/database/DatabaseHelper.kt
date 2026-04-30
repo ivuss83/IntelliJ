@@ -391,6 +391,53 @@ object DatabaseHelper {
         }
     }
 
+    /* GESTIONE MATERIALE E DIPENDENZE DEL MATERIALE UTILIZZATO */
+    // Elimina Materiale con Dipendenze
+    fun deleteMaterialeConDipendenze(materialeId: Int) {
+        connect().use { conn ->
+            conn.autoCommit = false
+            try {
+                // Elimina il materiale dai rapportini
+                conn.prepareStatement("""
+                DELETE FROM RapportinoMateriale 
+                WHERE materialeId = ?
+            """).use { stmt ->
+                    stmt.setInt(1, materialeId)
+                    stmt.executeUpdate()
+                }
+
+                // Elimina il materiale dal magazzino
+                conn.prepareStatement("""
+                DELETE FROM Materiale 
+                WHERE id = ?
+            """).use { stmt ->
+                    stmt.setInt(1, materialeId)
+                    stmt.executeUpdate()
+                }
+
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
+    }
+
+    // Conto quanti Rapportini utilizzano il materiale
+    fun countRapportiniConMateriale(materialeId: Int): Int {
+        connect().use { conn ->
+            conn.prepareStatement("""
+            SELECT COUNT(*) 
+            FROM RapportinoMateriale 
+            WHERE materialeId = ?
+        """).use { stmt ->
+                stmt.setInt(1, materialeId)
+                val rs = stmt.executeQuery()
+                return if (rs.next()) rs.getInt(1) else 0
+            }
+        }
+    }
+
     /* TARIFFE */
     fun createImpostazioniTableIfNeeded() {
         val sql = """
@@ -429,7 +476,13 @@ object DatabaseHelper {
     }
 
     fun saveImpostazioni(tariffa: Double, rincaro: Double) {
-        val sql = "UPDATE Impostazioni SET tariffaOraria = ?, rincaroMateriale = ? WHERE id = 1"
+        val sql = """
+        INSERT INTO Impostazioni (id, tariffaOraria, rincaroMateriale)
+        VALUES (1, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            tariffaOraria = excluded.tariffaOraria,
+            rincaroMateriale = excluded.rincaroMateriale
+    """
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->

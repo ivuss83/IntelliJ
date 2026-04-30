@@ -57,6 +57,8 @@ fun MaterialeActivity(
 
     var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
 
+    var materialiUsatoInRapportini by remember { mutableStateOf(0) }
+
 
     val materialiFiltrati = listaMateriali.filter {
         it.marca.contains(searchQuery, ignoreCase = true) ||
@@ -248,9 +250,34 @@ fun MaterialeActivity(
                     // ICONA ELIMINA MATERIALE
                     IconButton(
                         onClick = {
-                            if (selectedMateriale != null)
-                                showDeleteMaterialConfirm = true
-                            else {
+                            if (selectedMateriale != null) {
+
+                                // 1️⃣ Conta quanti rapportini usano questo materiale
+                                val count = DatabaseHelper.countRapportiniConMateriale(selectedMateriale!!.id!!)
+
+                                if (count > 0) {
+                                    // 2️⃣ Salvo il numero per mostrarlo nella dialog
+                                    materialiUsatoInRapportini = count
+
+                                    // 3️⃣ Apro la dialog di conferma speciale
+                                    showDeleteMaterialConfirm = true
+
+                                } else {
+                                    // 4️⃣ Eliminazione diretta (nessuna dipendenza)
+                                    DatabaseHelper.deleteMaterialeConDipendenze(selectedMateriale!!.id!!)
+                                    listaMateriali = DatabaseHelper.getAllMateriale()
+
+                                    selectedMateriale = null
+                                    marca = ""
+                                    modello = ""
+                                    codice = ""
+                                    prezzo = ""
+
+                                    alertMessage = "Materiale Eliminato!"
+                                    showAlert = true
+                                }
+
+                            } else {
                                 alertMessage = "Seleziona un materiale da eliminare!"
                                 showAlert = true
                             }
@@ -306,46 +333,51 @@ fun MaterialeActivity(
                     }
                 }
 
-            // Alert Dialog per eliminazione Materiale
             if (showDeleteMaterialConfirm) {
                 AlertDialog(
                     onDismissRequest = { showDeleteMaterialConfirm = false },
                     title = { Text("Conferma eliminazione") },
-                    text = { Text("Sei sicuro di voler eliminare questo materiale?") },
-
+                    text = {
+                        Text(
+                            "Questo materiale è stato usato in $materialiUsatoInRapportini " +
+                                    "rapportini. Sei sicuro di volerlo eliminare?"
+                        )
+                    },
                     confirmButton = {
                         Button(
                             onClick = {
-                                try {
-                                    selectedMateriale?.let {
-                                        DatabaseHelper.deleteMateriale(it.id!!)
-                                    }
-
-                                    showDeleteMaterialConfirm = false
-                                    alertMessage = "Materiale eliminato!"
-                                    showAlert = true
-
-                                    // Reset selezione e aggiorna lista
-                                    selectedMateriale = null
-                                    listaMateriali = DatabaseHelper.getAllMateriale()
-
-                                    marca = ""
-                                    modello = ""
-                                    codice = ""
-                                    prezzo = ""
-
-                                } catch (e: Exception) {
-                                    alertMessage = "Errore nella cancellazione: ${e.message}"
-                                    showAlert = true
+                                selectedMateriale?.let {
+                                    DatabaseHelper.deleteMaterialeConDipendenze(it.id!!)
                                 }
-                            }
+
+                                showDeleteMaterialConfirm = false
+                                alertMessage = "Materiale eliminato!"
+                                showAlert = true
+
+                                selectedMateriale = null
+                                listaMateriali = DatabaseHelper.getAllMateriale()
+
+                                marca = ""
+                                modello = ""
+                                codice = ""
+                                prezzo = ""
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                Color(0xFF1976D2),   // blu deciso
+                                contentColor = Color.White            // testo bianco
+                            )
                         ) {
                             Text("OK")
                         }
                     },
-
                     dismissButton = {
-                        Button(onClick = { showDeleteMaterialConfirm = false }) {
+                        Button(onClick = { showDeleteMaterialConfirm = false },
+                            colors = ButtonDefaults.buttonColors(
+                                Color(0xFF1976D2),   // blu deciso
+                                contentColor = Color.White            // testo bianco
+                            )
+                            )
+                        {
                             Text("Annulla")
                         }
                     }

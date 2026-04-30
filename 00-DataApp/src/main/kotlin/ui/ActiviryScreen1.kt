@@ -98,6 +98,8 @@ fun Activity1Screen(onBack: () -> Unit) {
     var alertMessage by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
+    var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
+
 
     // -----------------------------------------
     // Materiale - Rapportino
@@ -130,7 +132,7 @@ fun Activity1Screen(onBack: () -> Unit) {
             /* COLONNA SINISTRA DATI RAPPORTINO */
 
             // ---------------------------
-            // COLONNA CENTRALE - DATI LAVORO
+            // COLONNA SINISTRA - DATI LAVORO
             // ---------------------------
             Column(modifier = Modifier
 
@@ -498,13 +500,24 @@ fun Activity1Screen(onBack: () -> Unit) {
                                             alertMessage = "Errore nella cancellazione dati: ${e.message}"
                                             showAlert = true
                                         }
-                                    }
-                                ) {
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),   // blu deciso
+                                        contentColor = Color.White            // testo bianco
+                                    )
+                                )
+                                {
                                     Text("OK")
                                 }
                             },
                             dismissButton = {
-                                Button(onClick = { showDeleteConfirm = false }) {
+                                Button(onClick = { showDeleteConfirm = false },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),   // blu deciso
+                                        contentColor = Color.White            // testo bianco
+                                    )
+
+                                    ) {
                                     Text("Annulla")
                                 }
                             }
@@ -583,6 +596,25 @@ fun Activity1Screen(onBack: () -> Unit) {
                         }
                     }
 
+                    // Icona Elimina Materiale inserito
+                    IconButton(
+                        onClick = {
+                            if (selectedMaterialeUsato != null) {
+                                materialiUsati = materialiUsati.filter { it != selectedMaterialeUsato }
+                                selectedMaterialeUsato = null
+                            } else {
+                                alertMessage = "Seleziona un materiale da eliminare!"
+                                showAlert = true
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Elimina materiale usato",
+                            tint = if (selectedMaterialeUsato != null) Color(0xFFD32F2F) else Color.Gray.copy(alpha = 0.4f)
+                        )
+                    }
+
                 }
 
                 Spacer(Modifier.height(10.dp))
@@ -599,21 +631,32 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
-                    items(materialiUsati) { (mat, qty) ->
+                    items(materialiUsati) { item ->
+
+                        val (mat, qty) = item
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(3.dp)
+                                .border(
+                                    1.dp,
+                                    if (selectedMaterialeUsato == item) Color.Blue else Color.LightGray
+                                )
+                                .clickable {
+                                    selectedMaterialeUsato = item
+                                }
+                                .padding(4.dp)
                         ) {
                             Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
                             Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
                         }
                     }
                 }
+
 
             }
 
@@ -931,8 +974,9 @@ fun Activity1Screen(onBack: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
 
                 // Conteggio Valore Materiale
+                val rincaroMateriale = DatabaseHelper.getImpostazioni()
                 var totaleMateriali = materialiRiepilogo.sumOf { (materiale,  quantita) ->
-                  materiale.prezzo * quantita
+                  materiale.prezzo * quantita * (1 + rincaroMateriale.rincaroMateriale / 100)
                 }
 
                 Text("Conteggio Materiali:", fontSize = 14.sp, color = Color.Gray)

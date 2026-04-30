@@ -30,6 +30,12 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
 
+    LaunchedEffect(Unit) {
+        val imp = DatabaseHelper.getImpostazioni()
+        tariffaOraria = imp.tariffaOraria.toString()
+        rincaroMateriale = imp.rincaroMateriale.toString()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,6 +45,7 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
         Text("Impostazioni", fontSize = 22.sp)
         Spacer(Modifier.height(20.dp))
+
 
         // TARIFa ORARIA
         Text("Tariffa oraria (€ / ora)", fontSize = 14.sp)
@@ -97,7 +104,7 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
                 } else {
                     DatabaseHelper.saveImpostazioni(t, r)
-                    alertMessage = "Impostazioni salvate!"
+                    alertMessage = "Impostazioni Salvate!"
                     showAlert = true
 
                 }
@@ -130,12 +137,6 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
         {
             Text("Torna al menu")
-        }
-
-        // ALERT
-        if (showAlert) {
-            Spacer(Modifier.height(20.dp))
-            Text(alertMessage, color = Color.Red)
         }
     }
 }
