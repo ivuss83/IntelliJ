@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
@@ -16,7 +17,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +53,9 @@ fun MaterialeActivity(
 
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
+
+    var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
+
 
     val materialiFiltrati = listaMateriali.filter {
         it.marca.contains(searchQuery, ignoreCase = true) ||
@@ -110,138 +117,214 @@ fun MaterialeActivity(
                 onClose = { showAlert = false }
             )
 
-            // Button Salva
+                // RIGA ICONE
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // ICONA SALVA MATERIALE
+                    IconButton(
+                        onClick = {
+                            try {
+                                if (
+                                    marca.isNotBlank() &&
+                                    modello.isNotBlank() &&
+                                    codice.isNotBlank() &&
+                                    prezzo.isNotBlank()
+                                ) {
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+                                    DatabaseHelper.insertMateriale(
+                                        marca,
+                                        modello,
+                                        codice,
+                                        prezzo.toDoubleOrNull() ?: 0.0
+                                    )
 
-                // ICONA SALVA MATERIALE
-                IconButton(
-                    onClick = {
-                        try {
-                            if (
-                                marca.isNotBlank() &&
-                                modello.isNotBlank() &&
-                                codice.isNotBlank() &&
-                                prezzo.isNotBlank()
-                            ) {
+                                    listaMateriali = DatabaseHelper.getAllMateriale()
 
-                                DatabaseHelper.insertMateriale(
-                                    marca,
-                                    modello,
-                                    codice,
-                                    prezzo.toDoubleOrNull() ?: 0.0
-                                )
+                                    // pulizia campi
+                                    marca = ""
+                                    modello = ""
+                                    codice = ""
+                                    prezzo = ""
 
-                                listaMateriali = DatabaseHelper.getAllMateriale()
+                                    alertMessage = "Materiale Salvato!"
+                                    showAlert = true
 
-                                // pulizia campi
-                                marca = ""
-                                modello = ""
-                                codice = ""
-                                prezzo = ""
-
-                                alertMessage = "Materiale Salvato!"
-                                showAlert = true
-
-                            } else {
-                                alertMessage = "Compila tutti i campi!"
+                                } else {
+                                    alertMessage = "Compila tutti i campi!"
+                                    showAlert = true
+                                }
+                            } catch (e: Exception) {
+                                alertMessage = "Errore nel Salvataggio: ${e.message}"
                                 showAlert = true
                             }
-                        } catch (e: Exception) {
-                            alertMessage = "Errore nel Salvataggio: ${e.message}"
-                            showAlert = true
+                        }
+                    ) {
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = "Salva Materiale",
+                                tint = Color(0xFF0D47A1)
+                            )
+
+                            Text(
+                                "Salva",
+                                fontSize = 10.sp,
+                                color = Color(0xFF0D47A1)
+                            )
                         }
                     }
-                ) {
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+
+                    // ICONA AGGIORNA MATERIALE
+                    IconButton(
+                        onClick = {
+                            try {
+                                if (selectedMateriale != null) {
+
+                                    DatabaseHelper.updateMateriale(
+                                        id = selectedMateriale!!.id!!,
+                                        marca = marca,
+                                        modello = modello,
+                                        codice = codice,
+                                        prezzo = prezzo.toDoubleOrNull() ?: 0.0
+                                    )
+
+                                    listaMateriali = DatabaseHelper.getAllMateriale()
+                                    selectedMateriale = null
+
+                                    marca = ""
+                                    modello = ""
+                                    codice = ""
+                                    prezzo = ""
+
+                                    alertMessage = "Materiale Aggiornato!"
+                                    showAlert = true
+
+                                } else {
+                                    alertMessage = "Seleziona un materiale da aggiornare!"
+                                    showAlert = true
+                                }
+                            } catch (e: Exception) {
+                                alertMessage = "Errore nell'Aggiornamento: ${e.message}"
+                                showAlert = true
+                            }
+                        }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = "Salva Materiale",
-                            tint =  Color(0xFF0D47A1)
-                        )
 
-                        Text(
-                            "Salva",
-                            fontSize = 10.sp,
-                            color = Color(0xFF0D47A1)
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Aggiorna Materiale",
+                                tint = if (selectedMateriale != null)
+                                    Color(0xFF0D47A1)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+
+                            Text(
+                                "Aggiorna",
+                                fontSize = 10.sp,
+                                color = if (selectedMateriale != null)
+                                    Color(0xFF0D47A1)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
+
+
+                    // ICONA ELIMINA MATERIALE
+                    IconButton(
+                        onClick = {
+                            if (selectedMateriale != null)
+                                showDeleteMaterialConfirm = true
+                            else {
+                                alertMessage = "Seleziona un materiale da eliminare!"
+                                showAlert = true
+                            }
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Elimina Materiale",
+                                tint = if (selectedMateriale != null)
+                                    Color(0xFFD32F2F)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+
+                            Text(
+                                "Elimina",
+                                fontSize = 10.sp,
+                                color = if (selectedMateriale != null)
+                                    Color(0xFFD32F2F)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
+                            )
+                        }
                     }
                 }
 
-                // QUI puoi aggiungere le altre icone
-                // IconButton { ... }
-                // IconButton { ... }
-            }
+            // Alert Dialog per eliminazione Materiale
+            if (showDeleteMaterialConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteMaterialConfirm = false },
+                    title = { Text("Conferma eliminazione") },
+                    text = { Text("Sei sicuro di voler eliminare questo materiale?") },
 
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                try {
+                                    selectedMateriale?.let {
+                                        DatabaseHelper.deleteMateriale(it.id!!)
+                                    }
 
-            Spacer(Modifier.height(10.dp))
+                                    showDeleteMaterialConfirm = false
+                                    alertMessage = "Materiale eliminato!"
+                                    showAlert = true
 
-            // Button Update
-                Button(
-                    onClick = {
-                        DatabaseHelper.updateMateriale(
-                            id = selectedMateriale!!.id!!,
-                            marca = marca,
-                            modello = modello,
-                            codice = codice,
-                            prezzo = prezzo.toDoubleOrNull() ?: 0.0
-                        )
+                                    // Reset selezione e aggiorna lista
+                                    selectedMateriale = null
+                                    listaMateriali = DatabaseHelper.getAllMateriale()
 
-                        listaMateriali = DatabaseHelper.getAllMateriale()
-                        selectedMateriale = null
+                                    marca = ""
+                                    modello = ""
+                                    codice = ""
+                                    prezzo = ""
 
-                        marca = ""
-                        modello = ""
-                        codice = ""
-                        prezzo = ""
-
-                    } ,
-                    modifier = Modifier.width(300.dp),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFF1976D2),   // blu deciso
-                        contentColor = Color.White            // testo bianco
-                    )
-                ) {
-                    Text("Aggiorna Materiale")
-                }
-
-            Spacer(Modifier.height(10.dp))
-
-            // Button Delete
-                Button(
-                    onClick = {
-                        DatabaseHelper.deleteMateriale(selectedMateriale!!.id!!)
-                        listaMateriali = DatabaseHelper.getAllMateriale()
-
-                        selectedMateriale = null
-                        marca = ""
-                        modello = ""
-                        codice = ""
-                        prezzo = ""
-
+                                } catch (e: Exception) {
+                                    alertMessage = "Errore nella cancellazione: ${e.message}"
+                                    showAlert = true
+                                }
+                            }
+                        ) {
+                            Text("OK")
+                        }
                     },
 
-                    modifier = Modifier.width(300.dp),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        Color(0xFF1976D2),   // blu deciso
-                        contentColor = Color.White            // testo bianco
-                    )
-
-                ) {
-                    Text("Elimina Materiale")
-                }
+                    dismissButton = {
+                        Button(onClick = { showDeleteMaterialConfirm = false }) {
+                            Text("Annulla")
+                        }
+                    }
+                )
+            }
 
             Spacer(Modifier.height(10.dp))
 
