@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -278,6 +279,31 @@ fun MaterialeActivity(
                             )
                         }
                     }
+
+                    // ICONA TORNA AL MENU
+                    IconButton(
+                        onClick = onBackToMenu
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Torna al menu",
+                                tint = Color(0xFF64B5F6)   // azzurro medio
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Menu",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
+                        }
+                    }
                 }
 
             // Alert Dialog per eliminazione Materiale
@@ -326,21 +352,8 @@ fun MaterialeActivity(
                 )
             }
 
-            Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-            // Button torna al menu
-            Button(onClick = onBackToMenu,
-                modifier = Modifier.width(300.dp),
-                border = BorderStroke(1.dp, Color.Gray),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    Color(0xFF1976D2),   // blu deciso
-                    contentColor = Color.White            // testo bianco
-                )
-            )
-            {
-                Text("Torna al Menu")
-            }
         }
 
         // -------------------------
