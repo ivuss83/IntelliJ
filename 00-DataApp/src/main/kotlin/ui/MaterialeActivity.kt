@@ -104,7 +104,7 @@ fun MaterialeActivity(
 
             OutlinedTextField(
                 value = prezzo,
-                onValueChange = { prezzo = it },
+                onValueChange = { prezzo = it.replace(',', '.') },
                 label = { Text("Prezzo") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

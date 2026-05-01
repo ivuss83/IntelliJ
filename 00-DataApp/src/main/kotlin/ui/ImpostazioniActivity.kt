@@ -53,7 +53,7 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
         BasicTextField(
             value = tariffaOraria,
-            onValueChange = { tariffaOraria = it },
+            onValueChange = { tariffaOraria = it.replace(',','.') },
             singleLine = true,
             textStyle = TextStyle(fontSize = 14.sp, color = Color.Black),
             modifier = Modifier
@@ -71,7 +71,7 @@ fun ImpostazioniActivity(onBack: () -> Unit) {
 
         BasicTextField(
             value = rincaroMateriale,
-            onValueChange = { rincaroMateriale = it },
+            onValueChange = { rincaroMateriale = it.replace(',','.') },
             singleLine = true,
             textStyle = TextStyle(fontSize = 14.sp, color = Color.Black),
             modifier = Modifier

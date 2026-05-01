@@ -100,6 +100,9 @@ fun Activity1Screen(onBack: () -> Unit) {
 
     var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
 
+    var showDeleteMaterialeUsatoConfirm by remember { mutableStateOf(false) }
+
+
 
     // -----------------------------------------
     // Materiale - Rapportino
@@ -360,7 +363,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = "Salva Rapportino",
-                                tint = if(clienteSelezionato != null)
+                                tint = if (clienteSelezionato != null)
                                     Color(0xFF0D47A1)   // blu scuro elegante
                                 else
                                     Color.Gray.copy(alpha = 0.4f)
@@ -511,13 +514,59 @@ fun Activity1Screen(onBack: () -> Unit) {
                                 }
                             },
                             dismissButton = {
-                                Button(onClick = { showDeleteConfirm = false },
+                                Button(
+                                    onClick = { showDeleteConfirm = false },
                                     colors = ButtonDefaults.buttonColors(
                                         Color(0xFF1976D2),   // blu deciso
                                         contentColor = Color.White            // testo bianco
                                     )
 
-                                    ) {
+                                ) {
+                                    Text("Annulla")
+                                }
+                            }
+                        )
+                    }
+
+                    // Alert Dialog per eliminazione MAteriale Inserito
+                    if (showDeleteMaterialeUsatoConfirm) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteMaterialeUsatoConfirm = false },
+                            title = { Text("Conferma eliminazione") },
+                            text = {
+                                Text("Sei sicuro che vuoi eliminare il materiale selezionato?")
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        // elimina il materiale selezionato
+                                        materialiUsati = materialiUsati.filter { it != selectedMaterialeUsato }
+
+                                        selectedMaterialeUsato = null
+                                        showDeleteMaterialeUsatoConfirm = false
+
+                                        alertMessage = "Materiale rimosso!"
+                                        showAlert = true
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),   // blu deciso
+                                        contentColor = Color.White            // testo bianco
+                                    )
+                                )
+
+                                {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                Button(onClick = { showDeleteMaterialeUsatoConfirm = false },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),   // blu deciso
+                                        contentColor = Color.White            // testo bianco
+                                    )
+                                )
+
+                                {
                                     Text("Annulla")
                                 }
                             }
@@ -558,19 +607,14 @@ fun Activity1Screen(onBack: () -> Unit) {
                         }
                     }
 
-                    // BUTTON Aggiungi materiale
-                    val quantitaDouble = quantita.toDoubleOrNull()
 
+                    // ICONA ELIMINA MATERIALE INSERITO
                     IconButton(
                         onClick = {
-                            if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                                materialiUsati =
-                                    mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
-
-                                quantita = ""
-                                selectedMateriale = null   // 🔥 reset selezione tabella
+                            if (selectedMaterialeUsato != null) {
+                                showDeleteMaterialeUsatoConfirm = true
                             } else {
-                                alertMessage = "Inserire un Numero nel campo Quantità!"
+                                alertMessage = "Seleziona un materiale da eliminare!"
                                 showAlert = true
                             }
                         }
@@ -581,40 +625,26 @@ fun Activity1Screen(onBack: () -> Unit) {
                         ) {
 
                             Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Aggiungi materiale",
-                                tint = Color(0xFF64B5F6)   // blu scuro elegante
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Elimina materiale",
+                                tint = if (selectedMaterialeUsato != null)
+                                    Color(0xFFD32F2F)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
 
                             Text(
-                                "Aggiungi Materiale",
+                                "Elimina Materiale inserito",
                                 fontSize = 10.sp,
-                                color = Color(0xFF64B5F6)
+                                color = if (selectedMaterialeUsato != null)
+                                    Color(0xFFD32F2F)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f)
                             )
                         }
                     }
-
-                    // Icona Elimina Materiale inserito
-                    IconButton(
-                        onClick = {
-                            if (selectedMaterialeUsato != null) {
-                                materialiUsati = materialiUsati.filter { it != selectedMaterialeUsato }
-                                selectedMaterialeUsato = null
-                            } else {
-                                alertMessage = "Seleziona un materiale da eliminare!"
-                                showAlert = true
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Elimina materiale usato",
-                            tint = if (selectedMaterialeUsato != null) Color(0xFFD32F2F) else Color.Gray.copy(alpha = 0.4f)
-                        )
-                    }
-
                 }
 
                 Spacer(Modifier.height(10.dp))
@@ -631,6 +661,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
@@ -674,7 +705,7 @@ fun Activity1Screen(onBack: () -> Unit) {
             /* COLONNA CENTRALE CLIENTI E MATEIRALE */
 
             // ---------------------------
-            // COLONNA SINISTRA: CLIENTI (TABELLA + RICERCA)
+            // COLONNA CENTRALE: CLIENTI (TABELLA + RICERCA)
             // ---------------------------
 
             Column(
@@ -767,17 +798,14 @@ fun Activity1Screen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(10.dp))
 
-
-
-                Spacer(Modifier.height(10.dp))
-
                 // -----------------------------------------
                 // TABELLA MATERIALE
                 // -----------------------------------------
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+
                 ) {
                     // Etichetta Materiale
                     Text(
@@ -809,7 +837,7 @@ fun Activity1Screen(onBack: () -> Unit) {
                                         quantitaFocusRequester.requestFocus()
 
                                     } else {
-                                        alertMessage = "Inserire un Numero nel campo Quantità!"
+                                        alertMessage = "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
                                         showAlert = true
                                     }
                                     true
@@ -827,11 +855,52 @@ fun Activity1Screen(onBack: () -> Unit) {
                         ),
                         singleLine = true
                     )
+
+                    Spacer(Modifier.width(20.dp))
+
+                    // ICONA AGGIUNGI MATERIALE
+                    val quantitaDouble = quantita.toDoubleOrNull()
+
+                    IconButton(
+                        onClick = {
+                            if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+                                materialiUsati =
+                                    mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+
+                                quantita = ""
+                                selectedMateriale = null   // 🔥 reset selezione tabella
+                            } else {
+                                alertMessage = "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                showAlert = true
+                            }
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Aggiungi materiale",
+                                tint = Color(0xFF64B5F6)   // blu scuro elegante
+
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Aggiungi Materiale",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(10.dp))
 
-                // Barra di Ricerca Materiale
+                // BARRA DI RICERCA MATERIALE
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
