@@ -15,8 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,23 +102,34 @@ fun ClienteActivity(
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
-        }
 
-        // Pulsante Torna al menu (in basso a sinistra)
-        Button(
-            onClick = onBackToMenu,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .width(300.dp)
-                .padding(10.dp),
-            border = BorderStroke(1.dp, Color.Gray),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                Color(0xFF1976D2),   // blu deciso
-                contentColor = Color.White            // testo bianco
-            )
-        ) {
-            Text("Torna al menu")
+            // Posiziono l'icona in fondo alla colonna
+            Spacer(Modifier.weight(1f))
+
+            // ICONA TORNA AL MENU
+            IconButton(
+                onClick = onBackToMenu,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Torna al menu",
+                        tint = Color(0xFF64B5F6)   // azzurro medio
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        "Menu",
+                        fontSize = 10.sp,
+                        color = Color(0xFF64B5F6)
+                    )
+                }
+            }
         }
 
         // Alert Dialog

@@ -76,7 +76,7 @@ fun MaterialeActivity(
         ) {
             Text("Inserisci Materiale", style = MaterialTheme.typography.h5)
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(10.dp))
 
             OutlinedTextField(
                 value = marca,
@@ -410,7 +410,10 @@ fun MaterialeActivity(
 
             // TABELLA MATERIALI
             LazyColumn(
-                modifier = Modifier.fillMaxSize().border(1.dp, Color.Gray)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color.Gray)
+                    .padding(all = 2.dp),
             ) {
                 items(materialiFiltrati) { materiale ->
                     Row(

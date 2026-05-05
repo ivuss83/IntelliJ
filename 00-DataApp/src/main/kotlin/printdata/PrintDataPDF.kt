@@ -88,10 +88,9 @@ fun generaPdf(
     documento.add(tabOre)
 
     documento.add(Paragraph("\n\n"))
-
     // ----------------------------------------------------
-// SEZIONE MATERIALI
-// ----------------------------------------------------
+    // SEZIONE MATERIALI
+    // ----------------------------------------------------
     documento.add(Paragraph("Materiale utilizzato:", Font(Font.HELVETICA, 14f, Font.BOLD)))
     documento.add(Paragraph("\n"))
 
@@ -99,7 +98,7 @@ fun generaPdf(
     tabMat.widthPercentage = 100f
     tabMat.setWidths(floatArrayOf(2f, 0.7f, 1f))
 
-// Intestazioni tabella
+    // Intestazioni tabella
     tabMat.addCell(PdfPCell(Paragraph("Descrizione", Font(Font.HELVETICA, 12f, Font.BOLD))))
     tabMat.addCell(PdfPCell(Paragraph("Quantità", Font(Font.HELVETICA, 12f, Font.BOLD))).apply {
         horizontalAlignment = Element.ALIGN_RIGHT
@@ -108,7 +107,8 @@ fun generaPdf(
         horizontalAlignment = Element.ALIGN_RIGHT
     })
 
-// Totale materiali
+
+    // Totale materiali
     var totaleMateriali = 0.0
     val rincaroMateriale = DatabaseHelper.getImpostazioni()
 
@@ -130,7 +130,7 @@ fun generaPdf(
         )
     }
 
-// --- RIGA TOTALE MATERIALI (DENTRO LA TABELLA) ---
+    // --- RIGA TOTALE MATERIALI (DENTRO LA TABELLA) --- //
     val cellTotLabel = PdfPCell(Paragraph("Totale materiali:", Font(Font.HELVETICA, 13f, Font.BOLD)))
     cellTotLabel.colspan = 2
     cellTotLabel.border = Rectangle.TOP

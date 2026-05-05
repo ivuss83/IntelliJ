@@ -79,7 +79,9 @@ import dataclass.Rapportino
 import printdata.generaPdf
 
 @Composable
-fun Activity1Screen(onBack: () -> Unit) {
+fun Activity1Screen(
+    onBack: () -> Unit) {
+
     // Variabili per Barre di ricerca
     var clienti by remember { mutableStateOf(listOf<Cliente>()) }
     var clienteSelezionato by remember { mutableStateOf<Cliente?>(null) }
@@ -94,19 +96,14 @@ fun Activity1Screen(onBack: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
     val quantitaFocusRequester = remember { FocusRequester() }
 
+    // Alert Dialog
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteMaterialeUsatoConfirm by remember { mutableStateOf(false) }
 
     var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
 
-    var showDeleteMaterialeUsatoConfirm by remember { mutableStateOf(false) }
-
-
-
-    // -----------------------------------------
-    // Materiale - Rapportino
-    // -----------------------------------------
     var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
     var selectedMateriale by remember { mutableStateOf<Materiale?>(null) }
     var quantita by remember { mutableStateOf("") }
