@@ -16,7 +16,9 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
@@ -26,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -58,6 +61,7 @@ fun MaterialeActivity(
     var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
 
     var materialiUsatoInRapportini by remember { mutableStateOf(0) }
+    var nomeClienteMaterialeDaEliminare by remember { mutableStateOf("") }
 
 
     val materialiFiltrati = listaMateriali.filter {
@@ -84,6 +88,14 @@ fun MaterialeActivity(
                 label = { Text("Marca") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
+
             )
 
             OutlinedTextField(
@@ -92,6 +104,13 @@ fun MaterialeActivity(
                 label = { Text("Modello") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             OutlinedTextField(
@@ -100,6 +119,13 @@ fun MaterialeActivity(
                 label = { Text("Codice") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             OutlinedTextField(
@@ -108,6 +134,13 @@ fun MaterialeActivity(
                 label = { Text("Prezzo") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             Spacer(Modifier.height(10.dp))
@@ -127,37 +160,46 @@ fun MaterialeActivity(
                         .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
+
                     // ICONA SALVA MATERIALE
+                    val prezzoDouble = prezzo.toDoubleOrNull()
+
                     IconButton(
                         onClick = {
                             try {
+                                // Verifico completezza dei campi
                                 if (
                                     marca.isNotBlank() &&
                                     modello.isNotBlank() &&
-                                    codice.isNotBlank() &&
-                                    prezzo.isNotBlank()
+                                    codice.isNotBlank()
                                 ) {
 
-                                    DatabaseHelper.insertMateriale(
-                                        marca,
-                                        modello,
-                                        codice,
-                                        prezzo.toDoubleOrNull() ?: 0.0
-                                    )
+                                    // Verifico che il campo prezzo sia numerico
+                                    if (prezzoDouble != null) {
+                                        DatabaseHelper.insertMateriale(
+                                            marca,
+                                            modello,
+                                            codice,
+                                            prezzoDouble
+                                        )
 
-                                    listaMateriali = DatabaseHelper.getAllMateriale()
+                                        listaMateriali = DatabaseHelper.getAllMateriale()
 
-                                    // pulizia campi
-                                    marca = ""
-                                    modello = ""
-                                    codice = ""
-                                    prezzo = ""
+                                        // pulizia campi
+                                        marca = ""
+                                        modello = ""
+                                        codice = ""
+                                        prezzo = ""
 
-                                    alertMessage = "Materiale Salvato!"
-                                    showAlert = true
+                                        alertMessage = "Materiale Salvato!"
+                                        showAlert = true
 
+                                    } else {
+                                        alertMessage = "Campo prezzo deve contenere numeri!"
+                                        showAlert = true
+                                    }
                                 } else {
-                                    alertMessage = "Compila tutti i campi!"
+                                    alertMessage = "Controlla tutti i campi!"
                                     showAlert = true
                                 }
                             } catch (e: Exception) {
@@ -254,10 +296,12 @@ fun MaterialeActivity(
 
                                 // 1️⃣ Conta quanti rapportini usano questo materiale
                                 val count = DatabaseHelper.countRapportiniConMateriale(selectedMateriale!!.id!!)
+                                val nomeCliente = DatabaseHelper.getClientiCheUsanoMateriale(selectedMateriale!!.id!!)
 
                                 if (count > 0) {
                                     // 2️⃣ Salvo il numero per mostrarlo nella dialog
                                     materialiUsatoInRapportini = count
+                                    nomeClienteMaterialeDaEliminare = nomeCliente.joinToString (", ")
 
                                     // 3️⃣ Apro la dialog di conferma speciale
                                     showDeleteMaterialConfirm = true
@@ -331,6 +375,39 @@ fun MaterialeActivity(
                             )
                         }
                     }
+
+                    // ICONA ANNULLA SELEZIONE
+                    IconButton(
+                        onClick = {
+
+                            marca = ""
+                            modello = ""
+                            codice = ""
+                            prezzo = ""
+                            selectedMateriale = null
+                            searchQuery = ""
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Annulla Selezione",
+                                tint = Color(0xFF64B5F6)   // azzurro medio
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            Text(
+                                "Annulla Selezione",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64B5F6)
+                            )
+                        }
+                    }
                 }
 
             if (showDeleteMaterialConfirm) {
@@ -338,11 +415,38 @@ fun MaterialeActivity(
                     onDismissRequest = { showDeleteMaterialConfirm = false },
                     title = { Text("Conferma eliminazione") },
                     text = {
-                        Text(
-                            "Questo materiale è stato usato in $materialiUsatoInRapportini " +
-                                    "rapportini. Sei sicuro di volerlo eliminare?"
-                        )
+                        Column {
+                            Text(
+                                "Questo materiale è stato usato in $materialiUsatoInRapportini rapportini.",
+                                fontSize = 15.sp
+                            )
+
+                            Spacer(Modifier.height(8.dp))
+
+                            Text(
+                                "Clienti coinvolti:",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(Modifier.height(4.dp))
+
+                            // Lista clienti formattata
+                            nomeClienteMaterialeDaEliminare
+                                .split(", ")
+                                .forEach { cliente ->
+                                    Text("• $cliente")
+                                }
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                "Sei sicuro di volerlo eliminare?",
+                                fontSize = 15.sp
+                            )
+                        }
                     },
+
                     confirmButton = {
                         Button(
                             onClick = {
@@ -404,6 +508,13 @@ fun MaterialeActivity(
                 label = { Text("Cerca...") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             Spacer(Modifier.height(10.dp))

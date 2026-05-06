@@ -19,6 +19,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.Composable
@@ -69,8 +70,15 @@ fun ClienteActivity(
                 value = nome,
                 onValueChange = { nome = it },
                 label = { Text("Nome", fontSize = 12.sp) },
-                modifier = Modifier.width(300.dp),
-                singleLine = true
+                modifier = Modifier.width(400.dp),
+                singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             Spacer(Modifier.height(10.dp))
@@ -80,8 +88,15 @@ fun ClienteActivity(
                 value = cognome,
                 onValueChange = { cognome = it },
                 label = { Text("Cognome", fontSize = 12.sp) },
-                modifier = Modifier.width(300.dp),
-                singleLine = true
+                modifier = Modifier.width(400.dp),
+                singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             Spacer(Modifier.height(10.dp))
@@ -91,8 +106,15 @@ fun ClienteActivity(
                 value = tipologia,
                 onValueChange = { tipologia = it },
                 label = { Text("Tipologia lavoro", fontSize = 12.sp) },
-                modifier = Modifier.width(300.dp),
-                singleLine = true
+                modifier = Modifier.width(400.dp),
+                singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF64B5F6),     // bordo quando selezionato
+                    unfocusedBorderColor = Color.Gray,   // bordo quando NON selezionato
+                    cursorColor = Color(0xFF0D47A1),            // cursore blu scuro elegante
+                    focusedLabelColor = Color(0xFF0D47A1),      // label blu scuro
+                    unfocusedLabelColor = Color.Gray            // label grigio
+                )
             )
 
             // MEssaggio di Errore se campi vuoti
@@ -147,6 +169,8 @@ fun ClienteActivity(
                     alertMessage = "Compila tutti i Campi!"
                     showAlert = true
                 } else {
+                    alertMessage = "Cliente Salvato"
+                    showAlert = true
                     onAddCliente(nome, cognome, tipologia)
                     nome = ""
                     cognome = ""

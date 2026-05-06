@@ -438,6 +438,32 @@ object DatabaseHelper {
         }
     }
 
+    // Clienti che usano il materiale da eliminare
+    fun getClientiCheUsanoMateriale(materialeId: Int): List<String> {
+        val clienti = mutableListOf<String>()
+
+        connect().use { conn ->
+            conn.prepareStatement("""
+            SELECT DISTINCT c.nome, c.tipologia
+            FROM RapportinoMateriale rm
+            JOIN Rapportino r ON r.id = rm.rapportinoId
+            JOIN Clienti c ON c.id = r.clienteId
+            WHERE rm.materialeId = ?
+        """).use { stmt ->
+                stmt.setInt(1, materialeId)
+                val rs = stmt.executeQuery()
+
+                while (rs.next()) {
+                    val nome = rs.getString("nome")
+                    val tipologia = rs.getString("tipologia")
+                    clienti.add("$nome - $tipologia")
+                }
+            }
+        }
+
+        return clienti
+    }
+
     /* TARIFFE */
     fun createImpostazioniTableIfNeeded() {
         val sql = """
