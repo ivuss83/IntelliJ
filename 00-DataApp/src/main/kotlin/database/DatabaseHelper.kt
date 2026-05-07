@@ -248,6 +248,32 @@ object DatabaseHelper {
         }
     }
 
+    // Delete Materiale già inserito nel Rapportino
+    fun deleteMaterialeDaRapportino(materialeId: Int, rapportinoId: Int) {
+        connect().use { conn ->
+            conn.autoCommit = false
+            try {
+
+                conn.prepareStatement("""
+                DELETE FROM RapportinoMateriale
+                WHERE materialeId = ?
+                AND rapportinoId = ?
+                
+            """).use { stmt ->
+                    stmt.setInt(1, materialeId)
+                    stmt.setInt(2, rapportinoId)
+                    stmt.executeUpdate()
+                }
+
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
+    }
+
+
     /* Rapportino - Materiale */
     fun createRapportinoMaterialeTableIfNeeded() {
         val sql = """
@@ -282,7 +308,7 @@ object DatabaseHelper {
         }
     }
 
-    // Select Materiale utilizzato nel Rapportino
+    // Select Materiale utilizzato nei Rapportini del Cliente
     fun getMaterialiUsatiDaCliente(clienteId: Int): List<Pair<Materiale, Double>> {
         val result = mutableListOf<Pair<Materiale, Double>>()
 
@@ -300,6 +326,40 @@ object DatabaseHelper {
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, clienteId)
+                val rs = stmt.executeQuery()
+                while (rs.next()) {
+                    val materiale = Materiale(
+                        id = rs.getInt("id"),
+                        marca = rs.getString("marca"),
+                        modello = rs.getString("modello"),
+                        codice = rs.getString("codice"),
+                        prezzo = rs.getDouble("prezzo")
+                    )
+                    val quantita = rs.getDouble("totaleQuantita")
+                    result.add(materiale to quantita)
+                }
+            }
+        }
+
+        return result
+    }
+
+    // Select Materiale Utilizzato nel SINGOLO Rapportino
+    fun getMaterialiUsatiNelRapportino(rapportinoId: Int): List<Pair<Materiale, Double>> {
+        val result = mutableListOf<Pair<Materiale, Double>>()
+
+        val sql = """
+        SELECT m.*,
+               rm.quantita AS totaleQuantita,
+               (rm.quantita * m.prezzo) AS valoreTotale
+        FROM RapportinoMateriale rm
+        JOIN Materiale m ON m.id = rm.materialeId
+        WHERE rm.rapportinoId = ?
+    """.trimIndent()
+
+        connect().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, rapportinoId)
                 val rs = stmt.executeQuery()
                 while (rs.next()) {
                     val materiale = Materiale(

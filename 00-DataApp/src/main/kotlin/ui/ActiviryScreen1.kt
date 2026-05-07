@@ -103,6 +103,8 @@ fun Activity1Screen(
     var showDeleteMaterialeUsatoConfirm by remember { mutableStateOf(false) }
 
     var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
+    var selectedStorico by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
+    var idRapportinoCorrente by remember { mutableStateOf(0) }
 
     var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
     var selectedMateriale by remember { mutableStateOf<Materiale?>(null) }
@@ -1059,35 +1061,87 @@ fun Activity1Screen(
                 var totaleAssoluto = totaleMateriali + (totaleOre * tariffaOraria)
 
                 Text("Totale:", fontSize = 14.sp, color = Color.Gray)
-
                 Text(
                     text = "%.2f €".format(totaleAssoluto),
                     fontSize = 18.sp,
                     color = Color(0xFF4CAF50)
                 )
 
-                Spacer(Modifier.height(30.dp))
-
                 // -----------------------------------------
                 // RIEPILOGO MATERIALE USATO (STORICO)
                 // -----------------------------------------
-                Text(
-                    "Materiali utilizzati (storico):",
-                    fontSize = 16.sp)
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Materiali utilizzati (storico):",
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // ICONA ELIMINA (ora è nel posto giusto!)
+                    IconButton(
+                        onClick = {
+                            selectedStorico?.let { (mat, _) ->
+
+                                // 1️⃣ Elimina SOLO dal rapportino corrente
+                                DatabaseHelper.deleteMaterialeDaRapportino(
+                                    mat.id!!,
+                                    idRapportinoCorrente
+                                )
+
+                                // 2️⃣ Aggiorna lista storico del rapportino
+                                materialiRiepilogo = DatabaseHelper.getMaterialiUsatiNelRapportino(
+                                    idRapportinoCorrente
+                                )
+
+                                // 3️⃣ Reset selezione
+                                selectedStorico = null
+
+                                alertMessage = "Materiale rimosso dal rapportino!"
+                                showAlert = true
+
+
+                            }
+                        },
+                        enabled = selectedStorico != null
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Elimina materiale storico",
+                                tint = if (selectedStorico != null) Color(0xFFD32F2F) else Color.Gray.copy(alpha = 0.4f)
+                            )
+                            Text(
+                                "Elimina",
+                                fontSize = 10.sp,
+                                color = if (selectedStorico != null) Color(0xFFD32F2F) else Color.Gray.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
-                    items(materialiRiepilogo) { (mat, qty) ->
+                    items(materialiRiepilogo) { item ->
+                        val (mat, qty) = item
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .background(
+                                    if (selectedStorico == item) Color(0xFFE3F2FD)
+                                    else Color.Transparent
+                                )
+                                .clickable { selectedStorico = item }
                                 .padding(3.dp)
                         ) {
                             Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
@@ -1095,8 +1149,6 @@ fun Activity1Screen(
                         }
                     }
                 }
-
-               // Spacer(Modifier.height(30.dp))
 
             }
             /* FINE COLONNA DESTRA RIEPILOGO */
