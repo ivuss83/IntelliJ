@@ -253,7 +253,6 @@ object DatabaseHelper {
         connect().use { conn ->
             conn.autoCommit = false
             try {
-
                 conn.prepareStatement("""
                 DELETE FROM RapportinoMateriale
                 WHERE materialeId = ?
@@ -269,6 +268,23 @@ object DatabaseHelper {
             } catch (e: Exception) {
                 conn.rollback()
                 throw e
+            }
+        }
+    }
+
+    // Recupero l'id del Rapportino legato al mateirale che poi dovrò eliminare
+    fun getRapportinoIdDaMateriale(materialeId: Int): Int? {
+        connect().use { conn ->
+            conn.prepareStatement("""
+            SELECT rapportinoId
+            FROM RapportinoMateriale
+            WHERE materialeId = ?
+            ORDER BY id DESC
+            LIMIT 1
+        """).use { stmt ->
+                stmt.setInt(1, materialeId)
+                val rs = stmt.executeQuery()
+                return if (rs.next()) rs.getInt("rapportinoId") else null
             }
         }
     }

@@ -95,6 +95,8 @@ fun Activity1Screen(
 
     val focusRequester = remember { FocusRequester() }
     val quantitaFocusRequester = remember { FocusRequester() }
+    var showConfirmNoMaterials by remember { mutableStateOf(false) }
+
 
     // Alert Dialog
     var showAlert by remember { mutableStateOf(false) }
@@ -145,6 +147,7 @@ fun Activity1Screen(
             ){
                 // Testo Nome
                 Text("Nome", fontSize = 16.sp)
+
                 // Spacer
                 Spacer(Modifier.height(10.dp))
 
@@ -154,7 +157,7 @@ fun Activity1Screen(
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(
                         fontSize = 13.sp,
-                        color = Color.Blue   // 🔥 testo visibile
+                        color = Color(0xFF0D47A1)   // 🔥 testo visibile
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -166,7 +169,7 @@ fun Activity1Screen(
                         // Placeholder
                         if (nome.isEmpty()) {
                             Text(
-                                "Nome",
+                                "",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -189,7 +192,7 @@ fun Activity1Screen(
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(
                         fontSize = 13.sp,
-                        color = Color.Blue   // 🔥 testo visibile
+                        color = Color(0xFF0D47A1)   // 🔥 testo visibile
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -201,7 +204,7 @@ fun Activity1Screen(
                         // Placeholder
                         if (oreLavoro.isEmpty()) {
                             Text(
-                                "Ore lavoro",
+                                "",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -224,7 +227,7 @@ fun Activity1Screen(
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(
                         fontSize = 13.sp,
-                        color = Color.Blue   // 🔥 testo visibile
+                        color = Color(0xFF0D47A1)   // 🔥 testo visibile
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -236,7 +239,7 @@ fun Activity1Screen(
                         // Placeholder
                         if ((clienteSelezionato?.fullName ?: "").isEmpty()) {
                             Text(
-                                "Cliente",
+                                "",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -259,7 +262,7 @@ fun Activity1Screen(
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(
                         fontSize = 13.sp,
-                        color = Color.Blue   // 🔥 testo visibile
+                        color = Color(0xFF0D47A1)   // 🔥 testo visibile
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -271,7 +274,7 @@ fun Activity1Screen(
                         // Placeholder
                         if ((clienteSelezionato?.tipologia ?: "").isEmpty()) {
                             Text(
-                                "Tipologia lavoro",
+                                "",
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -314,35 +317,42 @@ fun Activity1Screen(
                                     oreLavoro.toDoubleOrNull() != null
                                 ) {
 
-                                    // Salvo il rapportino
-                                    DatabaseHelper.insertRapportino(
-                                        nome = nome,
-                                        ore = oreLavoro.toDouble(),
-                                        clienteId = clienteSelezionato!!.id,
-                                        tipologia = clienteSelezionato!!.tipologia
-                                    )
+                                    // Se non ci sono materiali inseriti
+                                    if (materialiUsati.isEmpty()){
+                                        showConfirmNoMaterials = true
+                                    } else {
 
-                                    // Recupero ID ultimo rapportino
-                                    val idRapportino = DatabaseHelper.getLastRapportinoId()
-
-                                    // Salvo materiali usati
-                                    materialiUsati.forEach { (mat, qty) ->
-                                        DatabaseHelper.insertRapportinoMateriale(
-                                            idRapportino,
-                                            mat.id!!,
-                                            qty
+                                        // Salvo il rapportino
+                                        DatabaseHelper.insertRapportino(
+                                            nome = nome,
+                                            ore = oreLavoro.toDouble(),
+                                            clienteId = clienteSelezionato!!.id,
+                                            tipologia = clienteSelezionato!!.tipologia
                                         )
+
+
+                                        // Recupero ID ultimo rapportino
+                                        val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                                        // Salvo materiali usati
+                                        materialiUsati.forEach { (mat, qty) ->
+                                            DatabaseHelper.insertRapportinoMateriale(
+                                                idRapportino,
+                                                mat.id!!,
+                                                qty
+                                            )
+                                        }
+
+                                        alertMessage = "Rapportino Salvato!"
+                                        showAlert = true
+
+                                        nome = ""
+                                        oreLavoro = ""
+                                        clienteSelezionato = null
+                                        selectedMateriale = null
+                                        materialiUsati = emptyList()
+                                        materialiRiepilogo = emptyList()
                                     }
-
-                                    alertMessage = "Rapportino Salvato!"
-                                    showAlert = true
-
-                                    nome = ""
-                                    oreLavoro = ""
-                                    clienteSelezionato = null
-                                    selectedMateriale = null
-                                    materialiUsati = emptyList()
-                                    materialiRiepilogo = emptyList()
 
                                 } else {
                                     alertMessage = "Controlla tutti i campi!"
@@ -362,7 +372,7 @@ fun Activity1Screen(
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = "Salva Rapportino",
-                                tint = if (clienteSelezionato != null)
+                                tint = if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank())
                                     Color(0xFF0D47A1)   // blu scuro elegante
                                 else
                                     Color.Gray.copy(alpha = 0.4f)
@@ -371,7 +381,7 @@ fun Activity1Screen(
                             Text(
                                 "Salva",
                                 fontSize = 10.sp,
-                                color = if (clienteSelezionato != null)
+                                color = if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank())
                                     Color(0xFF0D47A1)
                                 else
                                     Color.Gray.copy(alpha = 0.4f)
@@ -462,7 +472,7 @@ fun Activity1Screen(
                             Icon(
                                 imageVector = Icons.Default.Home,
                                 contentDescription = "Torna al menu",
-                                tint = Color(0xFF64B5F6)   // azzurro medio
+                                tint = Color(0xFF0D47A1)   // azzurro medio
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
@@ -470,7 +480,7 @@ fun Activity1Screen(
                             Text(
                                 "Menu",
                                 fontSize = 10.sp,
-                                color = Color(0xFF64B5F6)
+                                color = Color(0xFF0D47A1)
                             )
                         }
                     }
@@ -572,6 +582,68 @@ fun Activity1Screen(
                         )
                     }
 
+
+                    // Alert Dialog per chiedere conferma se procedere con salvataggio anche SENZA materiale
+                    if (showConfirmNoMaterials) {
+                        AlertDialog(
+                            onDismissRequest = { showConfirmNoMaterials = false },
+                            title = { Text("Nessun materiale inserito") },
+                            text = { Text("Vuoi salvare comunque il rapportino senza materiali?") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showConfirmNoMaterials = false
+
+                                        // Salvataggio effettivo
+                                        DatabaseHelper.insertRapportino(
+                                            nome = nome,
+                                            ore = oreLavoro.toDouble(),
+                                            clienteId = clienteSelezionato!!.id,
+                                            tipologia = clienteSelezionato!!.tipologia
+                                        )
+
+                                        val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                                        materialiUsati.forEach { (mat, qty) ->
+                                            DatabaseHelper.insertRapportinoMateriale(
+                                                idRapportino,
+                                                mat.id!!,
+                                                qty
+                                            )
+                                        }
+
+                                        alertMessage = "Rapportino Salvato!"
+                                        showAlert = true
+
+                                        nome = ""
+                                        oreLavoro = ""
+                                        clienteSelezionato = null
+                                        selectedMateriale = null
+                                        materialiUsati = emptyList()
+                                        materialiRiepilogo = emptyList()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = { showConfirmNoMaterials = false },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Annulla")
+                                }
+                            }
+                        )
+                    }
+
                     // ICONA ANNULLA SELEZIONE CLIENTE
                     IconButton(
                         onClick = {
@@ -593,7 +665,7 @@ fun Activity1Screen(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Annulla Selezione",
-                                tint = Color(0xFF64B5F6)   // azzurro medio
+                                tint = Color(0xFF0D47A1)   // azzurro medio
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))
@@ -601,7 +673,7 @@ fun Activity1Screen(
                             Text(
                                 "Annulla Selezione Cliente",
                                 fontSize = 10.sp,
-                                color = Color(0xFF64B5F6)
+                                color = Color(0xFF0D47A1)
                             )
                         }
                     }
@@ -726,9 +798,10 @@ fun Activity1Screen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(30.dp)
-                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))
                         .clickable { focusRequester.requestFocus() }
                         .padding(horizontal = 6.dp, vertical = 4.dp)
+
                 ) {
                     BasicTextField(
                         value = searchText,
@@ -771,16 +844,15 @@ fun Activity1Screen(
                         .height(300.dp)
                         .border(1.dp, Color.Gray)
                         .padding(horizontal = 2.dp)
+                        .padding(top = 3.dp)
                 ) {
                     items(clientiFiltrati) { cliente ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(2.dp)
-                                .border(
-                                    1.dp,
-                                    if (clienteSelezionato?.id == cliente.id) Color.Blue else Color.LightGray
-                                )
+                                .border(1.dp, Color.LightGray, RoundedCornerShape(1.dp))
+                                .background(if (clienteSelezionato?.id != null) Color(0xFFE3F2FD) else Color.Transparent)
                                 .padding(3.dp)
                                 .clickable {
                                     clienteSelezionato = cliente // Selezione Cliente
@@ -821,7 +893,7 @@ fun Activity1Screen(
                         modifier = Modifier
                             .width(150.dp)   // 🔥 più piccolo
                             .focusRequester(quantitaFocusRequester)
-                            .onKeyEvent { event ->
+                            .onKeyEvent { event -> // Se premo Enter
                                 val quantitaDouble = quantita.toDoubleOrNull()
 
                                 if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
@@ -855,44 +927,79 @@ fun Activity1Screen(
                         singleLine = true
                     )
 
-                    Spacer(Modifier.width(20.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),   // 🔥 distanza controllata
+                        modifier = Modifier.padding(start = 20.dp)
+                    ) {
+                        // ICONA AGGIUNGI MATERIALE
+                        val quantitaDouble = quantita.toDoubleOrNull()
 
-                    // ICONA AGGIUNGI MATERIALE
-                    val quantitaDouble = quantita.toDoubleOrNull()
+                        IconButton(
+                            onClick = {
+                                if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+                                    materialiUsati =
+                                        mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
 
-                    IconButton(
-                        onClick = {
-                            if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                                materialiUsati =
-                                    mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+                                    quantita = ""
+                                    selectedMateriale = null   // 🔥 reset selezione tabella
+                                } else {
+                                    alertMessage =
+                                        "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                    showAlert = true
+                                }
+                            }
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
 
-                                quantita = ""
-                                selectedMateriale = null   // 🔥 reset selezione tabella
-                            } else {
-                                alertMessage = "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
-                                showAlert = true
+                                Icon(
+                                    modifier = Modifier.padding(top = 15.dp),
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Aggiungi materiale",
+                                    tint = Color(0xFF64B5F6)   // blu scuro elegante
+
+                                )
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                Text(
+                                    "Aggiungi Materiale",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF64B5F6)
+                                )
                             }
                         }
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
+
+                        Spacer(Modifier.width(10.dp))
+
+                        // ICONA ANNULLA SELEZIONE TABELLA MATERIALE
+                        IconButton(
+                            onClick = {
+                                selectedMateriale = null
+                                quantita = ""
+                            }
                         ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
 
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Aggiungi materiale",
-                                tint = Color(0xFF64B5F6)   // blu scuro elegante
+                                Icon(
+                                    modifier = Modifier.padding(top = 15.dp),
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Ann. Sel.",
+                                    tint = Color(0xFF0D47A1)   // azzurro medio
+                                )
 
-                            )
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                "Aggiungi Materiale",
-                                fontSize = 10.sp,
-                                color = Color(0xFF64B5F6)
-                            )
+                                Text(
+                                    "Ann. Selezione",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF0D47A1)
+                                )
+                            }
                         }
                     }
                 }
@@ -954,10 +1061,9 @@ fun Activity1Screen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(2.dp)
-                                .border(
-                                    1.dp,
-                                    if (selectedMateriale?.id == materiale.id) Color.Blue else Color.LightGray
-                                )
+                                .padding(top = 3.dp)
+                                .background(if (selectedMateriale?.id == materiale.id) Color(0xFFE3F2FD) else Color.Transparent)
+                                .border(1.dp, Color.LightGray, RoundedCornerShape(1.dp))
                                 .padding(3.dp)
                                 .clickable {
                                     selectedMateriale = materiale
@@ -992,7 +1098,7 @@ fun Activity1Screen(
             // ---------------------------
             Column(
                 modifier = Modifier
-                    .weight(0.6f)
+                    .weight(0.8f)
                     .padding(horizontal = 10.dp)
                     .padding(end = 10.dp)
             ) {
@@ -1071,9 +1177,13 @@ fun Activity1Screen(
                 // RIEPILOGO MATERIALE USATO (STORICO)
                 // -----------------------------------------
 
+                Spacer(Modifier.height(10.dp))
+
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Text(
                         "Materiali utilizzati (storico):",
@@ -1081,7 +1191,7 @@ fun Activity1Screen(
                         modifier = Modifier.weight(1f)
                     )
 
-                    // ICONA ELIMINA (ora è nel posto giusto!)
+                    // ICONA ELIMINA
                     IconButton(
                         onClick = {
                             selectedStorico?.let { (mat, _) ->
@@ -1099,14 +1209,15 @@ fun Activity1Screen(
 
                                 // 3️⃣ Reset selezione
                                 selectedStorico = null
-
+                                idRapportinoCorrente = 0
                                 alertMessage = "Materiale rimosso dal rapportino!"
                                 showAlert = true
 
 
                             }
                         },
-                        enabled = selectedStorico != null
+                        enabled = selectedStorico != null,
+                        modifier = Modifier.padding(end = 10.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
@@ -1121,6 +1232,32 @@ fun Activity1Screen(
                             )
                         }
                     }
+
+                    // ICONA ANNULLA SELEZIONE MATERIALE STORICO
+                    IconButton(
+                        onClick = {
+                            selectedStorico = null
+                            idRapportinoCorrente = 0
+                        }
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Ann. Sel.",
+                                tint = Color(0xFF0D47A1)   // azzurro medio
+                            )
+
+                            Text(
+                                "Ann. Selezione",
+                                fontSize = 10.sp,
+                                color = Color(0xFF0D47A1)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(10.dp))
@@ -1128,6 +1265,7 @@ fun Activity1Screen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight()
                         .height(150.dp)
                         .border(1.dp, Color.LightGray)
                 ) {
@@ -1141,7 +1279,14 @@ fun Activity1Screen(
                                     if (selectedStorico == item) Color(0xFFE3F2FD)
                                     else Color.Transparent
                                 )
-                                .clickable { selectedStorico = item }
+                                .clickable {
+                                    selectedStorico = item
+                                    val rappId = DatabaseHelper.getRapportinoIdDaMateriale(mat.id!!)
+                                    if(rappId != null) {
+                                        idRapportinoCorrente = rappId
+                                        println("DEBUG - rapportino selezionato automaticamente: $idRapportinoCorrente")
+                                    }
+                                }
                                 .padding(3.dp)
                         ) {
                             Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
