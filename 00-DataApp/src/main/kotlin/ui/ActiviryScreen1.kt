@@ -103,6 +103,7 @@ fun Activity1Screen(
     var alertMessage by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDeleteMaterialeUsatoConfirm by remember { mutableStateOf(false) }
+    var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
 
     var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
     var selectedStorico by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
@@ -352,6 +353,7 @@ fun Activity1Screen(
                                         selectedMateriale = null
                                         materialiUsati = emptyList()
                                         materialiRiepilogo = emptyList()
+                                        totaleOre = 0.0
                                     }
 
                                 } else {
@@ -621,6 +623,7 @@ fun Activity1Screen(
                                         selectedMateriale = null
                                         materialiUsati = emptyList()
                                         materialiRiepilogo = emptyList()
+                                        totaleOre = 0.0
                                     },
                                     colors = ButtonDefaults.buttonColors(
                                         Color(0xFF1976D2),
@@ -633,6 +636,67 @@ fun Activity1Screen(
                             dismissButton = {
                                 Button(
                                     onClick = { showConfirmNoMaterials = false },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Annulla")
+                                }
+                            }
+                        )
+                    }
+
+                    // Alert Dialog per eliminazione Materiale STORICO dal Rapportino
+                    if (showDeleteMaterialConfirm) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteMaterialConfirm = false },
+                            title = { Text("Conferma eliminazione") },
+                            text = { Text("Sei sicuro di voler eliminare questo materiale dal rapportino?") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        try {
+                                            selectedStorico?.let { (mat, _) ->
+
+                                                // 🔥 Elimina SOLO dal rapportino corrente
+                                                DatabaseHelper.deleteMaterialeDaRapportino(
+                                                    mat.id!!,
+                                                    idRapportinoCorrente
+                                                )
+
+                                                // Aggiorna lista materiali del rapportino
+                                                materialiRiepilogo = DatabaseHelper.getMaterialiUsatiNelRapportino(
+                                                    idRapportinoCorrente
+                                                )
+
+                                                // Reset selezione
+                                                totaleOre = 0.0
+                                                selectedStorico = null
+                                                idRapportinoCorrente = 0
+                                                alertMessage = "Materiale rimosso dal rapportino!"
+                                                showAlert = true
+                                            }
+
+                                            showDeleteMaterialConfirm = false
+
+                                        } catch (e: Exception) {
+                                            alertMessage = "Errore nella cancellazione materiale: ${e.message}"
+                                            showAlert = true
+                                        }
+
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        Color(0xFF1976D2),   // blu deciso
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = { showDeleteMaterialConfirm = false },
                                     colors = ButtonDefaults.buttonColors(
                                         Color(0xFF1976D2),
                                         contentColor = Color.White
@@ -852,7 +916,7 @@ fun Activity1Screen(
                                 .fillMaxWidth()
                                 .padding(2.dp)
                                 .border(1.dp, Color.LightGray, RoundedCornerShape(1.dp))
-                                .background(if (clienteSelezionato?.id != null) Color(0xFFE3F2FD) else Color.Transparent)
+                                .background(if (clienteSelezionato?.id == cliente.id) Color(0xFFE3F2FD) else Color.Transparent)
                                 .padding(3.dp)
                                 .clickable {
                                     clienteSelezionato = cliente // Selezione Cliente
@@ -932,6 +996,7 @@ fun Activity1Screen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),   // 🔥 distanza controllata
                         modifier = Modifier.padding(start = 20.dp)
                     ) {
+
                         // ICONA AGGIUNGI MATERIALE
                         val quantitaDouble = quantita.toDoubleOrNull()
 
@@ -1194,26 +1259,8 @@ fun Activity1Screen(
                     // ICONA ELIMINA
                     IconButton(
                         onClick = {
-                            selectedStorico?.let { (mat, _) ->
-
-                                // 1️⃣ Elimina SOLO dal rapportino corrente
-                                DatabaseHelper.deleteMaterialeDaRapportino(
-                                    mat.id!!,
-                                    idRapportinoCorrente
-                                )
-
-                                // 2️⃣ Aggiorna lista storico del rapportino
-                                materialiRiepilogo = DatabaseHelper.getMaterialiUsatiNelRapportino(
-                                    idRapportinoCorrente
-                                )
-
-                                // 3️⃣ Reset selezione
-                                selectedStorico = null
-                                idRapportinoCorrente = 0
-                                alertMessage = "Materiale rimosso dal rapportino!"
-                                showAlert = true
-
-
+                            if(selectedStorico != null){
+                                showDeleteMaterialConfirm = true
                             }
                         },
                         enabled = selectedStorico != null,
