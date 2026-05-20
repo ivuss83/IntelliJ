@@ -112,6 +112,8 @@ fun Activity1Screen(
     var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
     var selectedMateriale by remember { mutableStateOf<Materiale?>(null) }
     var quantita by remember { mutableStateOf("") }
+    var quantitaDaEliminare by remember { mutableStateOf("") }
+
 
     // Materiali già usati dal cliente (storico)
     var materialiRiepilogo by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }

@@ -248,8 +248,9 @@ object DatabaseHelper {
         }
     }
 
-    // Delete Materiale già inserito nel Rapportino
+    // Delete Materiale già inserito nel Rapportino - STORICO
     fun deleteMaterialeDaRapportino(materialeId: Int, rapportinoId: Int) {
+        println(">>> Tentativo di DELETE: materialeId=$materialeId, rapportinoId=$rapportinoId")
         connect().use { conn ->
             conn.autoCommit = false
             try {
@@ -261,9 +262,34 @@ object DatabaseHelper {
             """).use { stmt ->
                     stmt.setInt(1, materialeId)
                     stmt.setInt(2, rapportinoId)
-                    stmt.executeUpdate()
+                    var rows = stmt.executeUpdate()
+
+                    println(">>> Righe eliminate: $rows")
                 }
 
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                println(">>> ERRORE DELETE: ${e.message}")
+                throw e
+            }
+        }
+    }
+
+    /// Update quantità materiale STORICO dopo eliminazione
+    fun updateQuantitaMaterialeNelRapportino(idRiga: Int, nuovaQuantita: Double) {
+        connect().use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.prepareStatement("""
+                UPDATE RapportinoMateriale
+                SET quantita = ?
+                WHERE id = ?
+            """).use { stmt ->
+                    stmt.setDouble(1, nuovaQuantita)
+                    stmt.setInt(2, idRiga)
+                    stmt.executeUpdate()
+                }
                 conn.commit()
             } catch (e: Exception) {
                 conn.rollback()
@@ -271,6 +297,8 @@ object DatabaseHelper {
             }
         }
     }
+
+
 
     // Recupero l'id del Rapportino legato al mateirale che poi dovrò eliminare
     fun getRapportinoIdDaMateriale(materialeId: Int): Int? {
