@@ -216,7 +216,7 @@ object DatabaseHelper {
         return materiali
     }
 
-    // Update Materiale
+    // Update Materiale ACTIVITY MATERIALE
     fun updateMateriale(id: Int, marca: String, modello: String, codice: String, prezzo: Double) {
         val sql = """
         UPDATE Materiale 
@@ -276,7 +276,7 @@ object DatabaseHelper {
         }
     }
 
-    /// Update quantità materiale STORICO dopo eliminazione
+    /// Update quantità materiale dopo eliminazione - STORICO
     fun updateQuantitaMaterialeNelRapportino(idRiga: Int, nuovaQuantita: Double) {
         connect().use { conn ->
             conn.autoCommit = false
