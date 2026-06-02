@@ -29,6 +29,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -69,6 +70,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import database.DatabaseHelper
@@ -310,85 +313,90 @@ fun Activity1Screen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
 
-                    // ICONA SALVA
-                    IconButton(
-                        onClick = {
-                            try {
-                                if (clienteSelezionato != null &&
-                                    nome.isNotBlank() &&
-                                    oreLavoro.isNotBlank() &&
-                                    oreLavoro.toDoubleOrNull() != null
-                                ) {
+                    // ICONA SALVA — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .width(60.dp)
+                            .clickable {
+                                try {
+                                    if (clienteSelezionato != null &&
+                                        nome.isNotBlank() &&
+                                        oreLavoro.isNotBlank() &&
+                                        oreLavoro.toDoubleOrNull() != null
+                                    ) {
 
-                                    // Se non ci sono materiali inseriti
-                                    if (materialiUsati.isEmpty()){
-                                        showConfirmNoMaterials = true
-                                    } else {
+                                        // Se non ci sono materiali inseriti
+                                        if (materialiUsati.isEmpty()) {
+                                            showConfirmNoMaterials = true
+                                        } else {
 
-                                        // Salvo il rapportino
-                                        DatabaseHelper.insertRapportino(
-                                            nome = nome,
-                                            ore = oreLavoro.toDouble(),
-                                            clienteId = clienteSelezionato!!.id,
-                                            tipologia = clienteSelezionato!!.tipologia
-                                        )
-
-
-                                        // Recupero ID ultimo rapportino
-                                        val idRapportino = DatabaseHelper.getLastRapportinoId()
-
-                                        // Salvo materiali usati
-                                        materialiUsati.forEach { (mat, qty) ->
-                                            DatabaseHelper.insertRapportinoMateriale(
-                                                idRapportino,
-                                                mat.id!!,
-                                                qty
+                                            // Salvo il rapportino
+                                            DatabaseHelper.insertRapportino(
+                                                nome = nome,
+                                                ore = oreLavoro.toDouble(),
+                                                clienteId = clienteSelezionato!!.id,
+                                                tipologia = clienteSelezionato!!.tipologia
                                             )
+
+                                            // Recupero ID ultimo rapportino
+                                            val idRapportino = DatabaseHelper.getLastRapportinoId()
+
+                                            // Salvo materiali usati
+                                            materialiUsati.forEach { (mat, qty) ->
+                                                DatabaseHelper.insertRapportinoMateriale(
+                                                    idRapportino,
+                                                    mat.id!!,
+                                                    qty
+                                                )
+                                            }
+
+                                            // Messaggio di conferma
+                                            alertMessage = "Rapportino Salvato!"
+                                            showAlert = true
+
+                                            // Reset campi
+                                            nome = ""
+                                            oreLavoro = ""
+                                            clienteSelezionato = null
+                                            selectedMateriale = null
+                                            materialiUsati = emptyList()
+                                            materialiRiepilogo = emptyList()
+                                            totaleOre = 0.0
                                         }
 
-                                        alertMessage = "Rapportino Salvato!"
+                                    } else {
+                                        alertMessage = "Controlla tutti i campi!"
                                         showAlert = true
-
-                                        nome = ""
-                                        oreLavoro = ""
-                                        clienteSelezionato = null
-                                        selectedMateriale = null
-                                        materialiUsati = emptyList()
-                                        materialiRiepilogo = emptyList()
-                                        totaleOre = 0.0
                                     }
-
-                                } else {
-                                    alertMessage = "Controlla tutti i campi!"
+                                } catch (e: Exception) {
+                                    alertMessage = "Errore nel Salvataggio: ${e.message}"
                                     showAlert = true
                                 }
-                            } catch (e: Exception) {
-                                alertMessage = "Errore nel Salvataggio: ${e.message}"
-                                showAlert = true
-                            }
-                        }
+                            },
+                        elevation = 6.dp
                     ) {
-
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(Color(0xFFE3F2FD)) // sfondo card (Material3 non disponibile su Desktop)
+                                .padding(12.dp)
                         ) {
+
+                            // Icona principale
                             Icon(
-                                imageVector = Icons.Default.Done,
+                                imageVector = Icons.Default.Create,
                                 contentDescription = "Salva Rapportino",
-                                tint = if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank())
-                                    Color(0xFF0D47A1)   // blu scuro elegante
-                                else
-                                    Color.Gray.copy(alpha = 0.4f)
+                                tint = Color(0xFF0D47A1),
+                                modifier = Modifier.size(28.dp)
                             )
 
+                            // Testo descrittivo
                             Text(
                                 "Salva",
-                                fontSize = 10.sp,
-                                color = if (clienteSelezionato != null && nome.isNotBlank() && oreLavoro.isNotBlank())
-                                    Color(0xFF0D47A1)
-                                else
-                                    Color.Gray.copy(alpha = 0.4f)
+                                fontSize = 12.sp,
+                                color = Color(0xFF0D47A1)
                             )
                         }
                     }
