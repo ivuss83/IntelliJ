@@ -380,7 +380,7 @@ fun Activity1Screen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier
-                                .background(Color(0xFFE3F2FD)) // sfondo card (Material3 non disponibile su Desktop)
+                                .background(Color(0xFFE3F2FD)) // sfondo card
                                 .padding(12.dp)
                         ) {
 
