@@ -1,5 +1,6 @@
 package ui
 
+
 import alertDialog.Alert
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -54,6 +55,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,9 +63,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.DragData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -144,18 +148,21 @@ fun Activity1Screen(
             // ---------------------------
             // COLONNA SINISTRA - DATI LAVORO
             // ---------------------------
-            Column(modifier = Modifier
 
+            Column(
+                modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 10.dp)
                 //.padding(end = 10.dp)
 
             ){
-                // Testo Nome
-                Text("Nome", fontSize = 16.sp)
+                Text("Dati Rapportino", fontSize = 16.sp)
 
-                // Spacer
                 Spacer(Modifier.height(10.dp))
+
+                // Testo Nome
+                Text("Nome", fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
 
                 BasicTextField(
                     value = nome,
@@ -186,11 +193,11 @@ fun Activity1Screen(
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(6.dp))
 
                 // Testo Ore Lavoro
-                Text("Ore Lavoro", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
+                Text("Ore Lavoro", fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
 
                 BasicTextField(
                     value = oreLavoro,
@@ -221,11 +228,11 @@ fun Activity1Screen(
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(6.dp))
 
                 // Testo Cliente
-                Text("Cliente", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
+                Text("Cliente", fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
 
                 BasicTextField(
                     value = clienteSelezionato?.fullName ?: "", // Se clienteSelezionato.fullName NON è Null usa quel valore, altrimenti usa la stringa vuota
@@ -256,11 +263,11 @@ fun Activity1Screen(
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(6.dp))
 
                 // Testo Tipologia Lavoro
-                Text("Tipologia Lavoro", fontSize = 16.sp)
-                Spacer(Modifier.height(10.dp))
+                Text("Tipologia Lavoro", fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
 
                 BasicTextField(
                     value = clienteSelezionato?.tipologia ?: "", // Se clienteSelezionato?.tipologia NON è Null usa quel valore, altrimenti usa la stringa vuota
@@ -291,7 +298,7 @@ fun Activity1Screen(
                     }
                 }
 
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(6.dp))
 
                 // -----------------------------------------
                 // Salva Rapportino + Materiali
@@ -316,8 +323,8 @@ fun Activity1Screen(
                     // ICONA SALVA — versione moderna in Card
                     Card(
                         modifier = Modifier
-                            .padding(8.dp)
-                            .width(60.dp)
+                            .padding(2.dp)
+                            .width(80.dp)
                             .clickable {
                                 try {
                                     if (clienteSelezionato != null &&
@@ -381,7 +388,7 @@ fun Activity1Screen(
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier
                                 .background(Color(0xFFE3F2FD)) // sfondo card
-                                .padding(12.dp)
+                                .padding(8.dp)
                         ) {
 
                             // Icona principale
@@ -394,44 +401,58 @@ fun Activity1Screen(
 
                             // Testo descrittivo
                             Text(
-                                "Salva",
-                                fontSize = 12.sp,
+                                "Salva\nRapportino",
+                                fontSize = 10.sp,
+                                textAlign = TextAlign.Center,
                                 color = Color(0xFF0D47A1)
                             )
                         }
                     }
 
-                    // ICONA STAMPA PDF
-                    IconButton(
-                        onClick = {
-                            if (clienteSelezionato != null) {
+                    // ICONA STAMPA PDF — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .width(70.dp)
+                            .clickable(
+                                enabled = clienteSelezionato != null
+                            ) {
                                 generaPdf(
                                     cliente = clienteSelezionato!!,
                                     totaleOre = totaleOre,
                                     tariffaOraria = DatabaseHelper.getImpostazioni().tariffaOraria,
                                     materialiRiepilogo = materialiRiepilogo
                                 )
-                            }
-                        },
-                        enabled = clienteSelezionato != null
+                            },
+                        elevation = 6.dp
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(
+                                    if (clienteSelezionato != null)
+                                        Color(0xFFE8F5E9)          // verde chiaro attivo
+                                    else
+                                        Color.LightGray.copy(alpha = 0.2f) // disattivo
+                                )
+                                .padding(8.dp)
                         ) {
 
                             Icon(
-                                imageVector = Icons.Default.Create,
+                                imageVector = Icons.Default.Share,
                                 contentDescription = "Stampa PDF",
                                 tint = if (clienteSelezionato != null)
                                     Color(0xFF1B5E20)     // verde scuro attivo
                                 else
-                                    Color.Gray.copy(alpha = 0.4f)  // disattivato
+                                    Color.Gray.copy(alpha = 0.4f),
+                                modifier = Modifier.size(28.dp)
                             )
 
                             Text(
-                                "Stampa PDF",
+                                "Stampa\nPDF",
                                 fontSize = 10.sp,
+                                textAlign = TextAlign.Center,
                                 color = if (clienteSelezionato != null)
                                     Color(0xFF1B5E20)
                                 else
@@ -440,14 +461,27 @@ fun Activity1Screen(
                         }
                     }
 
-                    // ICONA ELIMINA CLIENTE
-                    IconButton(
-                        onClick = { showDeleteConfirm = true },
-                        enabled = clienteSelezionato != null
+                    // ICONA ELIMINA CLIENTE — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .width(70.dp)   // stessa larghezza delle altre card
+                            .clickable(enabled = clienteSelezionato != null) {
+                                showDeleteConfirm = true
+                            },
+                        elevation = 6.dp
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(
+                                    if (clienteSelezionato != null)
+                                        Color(0xFFFFEBEE)              // rosso chiarissimo attivo
+                                    else
+                                        Color.LightGray.copy(alpha = 0.2f) // disattivo
+                                )
+                                .padding(8.dp)
                         ) {
 
                             Icon(
@@ -456,14 +490,14 @@ fun Activity1Screen(
                                 tint = if (clienteSelezionato != null)
                                     Color(0xFFC62828)   // rosso scuro elegante
                                 else
-                                    Color.Gray.copy(alpha = 0.4f) // disattivato
+                                    Color.Gray.copy(alpha = 0.4f),
+                                modifier = Modifier.size(28.dp)
                             )
-
-                            Spacer(modifier = Modifier.height(2.dp))
 
                             Text(
                                 "Elimina Cliente",
                                 fontSize = 10.sp,
+                                textAlign = TextAlign.Center,
                                 color = if (clienteSelezionato != null)
                                     Color(0xFFC62828)
                                 else
@@ -472,27 +506,37 @@ fun Activity1Screen(
                         }
                     }
 
-                    // ICONA TORNA AL MENU
-                    IconButton(
-                        onClick = onBack
+
+                    // ICONA TORNA AL MENU — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .width(70.dp)   // stessa larghezza delle altre card
+                            .clickable { onBack() },
+                        elevation = 6.dp
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(Color(0xFFE3F2FD))   // azzurro chiarissimo
+                                .padding(8.dp)
+                                .fillMaxWidth()
                         ) {
 
                             Icon(
                                 imageVector = Icons.Default.Home,
-                                contentDescription = "Torna al menu",
-                                tint = Color(0xFF0D47A1)   // azzurro medio
+                                contentDescription = "Torna al Menu",
+                                tint = Color(0xFF0D47A1),         // blu scuro elegante
+                                modifier = Modifier.size(28.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(2.dp))
-
                             Text(
-                                "Menu",
+                                "Menu\n",
                                 fontSize = 10.sp,
-                                color = Color(0xFF0D47A1)
+                                color = Color(0xFF0D47A1),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
@@ -580,7 +624,8 @@ fun Activity1Screen(
                                 }
                             },
                             dismissButton = {
-                                Button(onClick = { showDeleteMaterialeUsatoConfirm = false },
+                                Button(
+                                    onClick = { showDeleteMaterialeUsatoConfirm = false },
                                     colors = ButtonDefaults.buttonColors(
                                         Color(0xFF1976D2),   // blu deciso
                                         contentColor = Color.White            // testo bianco
@@ -718,81 +763,119 @@ fun Activity1Screen(
                         )
                     }
 
-                    // ICONA ANNULLA SELEZIONE CLIENTE
-                    IconButton(
-                        onClick = {
-
-                            nome = ""
-                            oreLavoro = ""
-                            clienteSelezionato = null
-                            selectedMateriale = null
-                            materialiUsati = emptyList()
-                            materialiRiepilogo = emptyList()
-                            totaleOre = 0.0
-                        }
+                    // ICONA ANNULLA SELEZIONE CLIENTE — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .width(70.dp)
+                            .clickable(enabled = clienteSelezionato != null)
+                            {
+                                nome = ""
+                                oreLavoro = ""
+                                clienteSelezionato = null
+                                selectedMateriale = null
+                                materialiUsati = emptyList()
+                                materialiRiepilogo = emptyList()
+                                totaleOre = 0.0
+                            },
+                        elevation = 6.dp
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(
+                                    if (clienteSelezionato != null)
+                                        Color(0xFFE3F2FD)  // azzurro chiarissimo
+                                    else
+                                        Color.LightGray.copy(alpha = 0.2f) // disattivo
+                                )
+                                .padding(8.dp)
+                                .fillMaxWidth()
                         ) {
 
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Annulla Selezione",
-                                tint = Color(0xFF0D47A1)   // azzurro medio
+                                contentDescription = "Annulla Selezione Cliente",
+                                tint = if (clienteSelezionato != null)
+                                    Color(0xFF0D47A1)
+                                else
+                                    Color.Gray.copy(alpha = 0.4f),
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .padding(bottom = 8.dp)   // ← padding icona richiesto
                             )
 
-                            Spacer(modifier = Modifier.height(2.dp))
-
                             Text(
-                                "Annulla Selezione Cliente",
+                                "Annulla\nCliente",
                                 fontSize = 10.sp,
-                                color = Color(0xFF0D47A1)
+                                color = if (clienteSelezionato != null)
+                                    Color(0xFF0D47A1)
+                                else Color.Gray.copy(alpha = 0.4f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
 
 
-                    // ICONA ELIMINA MATERIALE INSERITO
-                    IconButton(
-                        onClick = {
-                            if (selectedMaterialeUsato != null) {
-                                showDeleteMaterialeUsatoConfirm = true
-                            } else {
-                                alertMessage = "Seleziona un materiale da eliminare!"
-                                showAlert = true
-                            }
-                        }
+                    // ICONA ELIMINA MATERIALE INSERITO — versione moderna in Card
+                    Card(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .width(70.dp)
+                            .clickable {
+                                if (selectedMaterialeUsato != null) {
+                                    showDeleteMaterialeUsatoConfirm = true
+                                } else {
+                                    alertMessage = "Seleziona un materiale da eliminare!"
+                                    showAlert = true
+                                }
+                            },
+                        elevation = 6.dp
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .background(
+                                    if (selectedMaterialeUsato != null)
+                                        Color(0xFFFFEBEE)              // rosso chiarissimo attivo
+                                    else
+                                        Color.LightGray.copy(alpha = 0.2f) // disattivo
+                                )
+                                .padding(8.dp)
+                                .fillMaxWidth()
                         ) {
 
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Elimina materiale",
+                                contentDescription = "Elimina materiale inserito",
                                 tint = if (selectedMaterialeUsato != null)
-                                    Color(0xFFD32F2F)
+                                    Color(0xFFD32F2F)   // rosso scuro elegante
                                 else
-                                    Color.Gray.copy(alpha = 0.4f)
+                                    Color.Gray.copy(alpha = 0.4f),
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .padding(bottom = 8.dp)   // padding icona richiesto
                             )
 
-                            Spacer(modifier = Modifier.height(2.dp))
-
                             Text(
-                                "Elimina Materiale inserito",
+                                "Elimina\nMateriale",
                                 fontSize = 10.sp,
+                                textAlign = TextAlign.Center,
                                 color = if (selectedMaterialeUsato != null)
                                     Color(0xFFD32F2F)
                                 else
-                                    Color.Gray.copy(alpha = 0.4f)
+                                    Color.Gray.copy(alpha = 0.4f),
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+
+                    Spacer(Modifier.height(10.dp))
 
                 // -----------------------------------------
                 // MATERIALI DEL NUOVO RAPPORTINO
@@ -915,8 +998,8 @@ fun Activity1Screen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp)
-                        .border(1.dp, Color.Gray)
+                        .height(230.dp)
+                        .border(1.dp, Color.LightGray)
                         .padding(horizontal = 2.dp)
                         .padding(top = 3.dp)
                 ) {
@@ -941,7 +1024,7 @@ fun Activity1Screen(
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(14.dp))
 
                 // -----------------------------------------
                 // TABELLA MATERIALE
@@ -952,22 +1035,17 @@ fun Activity1Screen(
                     verticalAlignment = Alignment.CenterVertically,
 
                 ) {
-                    // Etichetta Materiale
-                    Text(
-                        "Materiale", fontSize = 16.sp
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
                     // 🔹 Campo Quantità piccolo e a destra
                     TextField(
                         value = quantita,
                         onValueChange = { quantita = it },
-                        label = { Text("Quantità", fontSize = 12.sp, modifier = Modifier.padding(start = 0.dp)) },
+                        label = { Text("Quantità", modifier = Modifier.padding(bottom = 10.dp)) },
                         modifier = Modifier
-                            .width(150.dp)   // 🔥 più piccolo
+                            .width(150.dp)
+                            .height(70.dp)
                             .focusRequester(quantitaFocusRequester)
-                            .onKeyEvent { event -> // Se premo Enter
+                            .onKeyEvent { event ->
+
                                 val quantitaDouble = quantita.toDoubleOrNull()
 
                                 if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
@@ -976,7 +1054,6 @@ fun Activity1Screen(
                                         materialiUsati = mergeMateriali(
                                             materialiUsati + (selectedMateriale!! to quantitaDouble)
                                         )
-
                                         quantita = ""
                                         selectedMateriale = null
                                         quantitaFocusRequester.requestFocus()
@@ -987,18 +1064,22 @@ fun Activity1Screen(
                                     }
                                     true
                                 } else false
-                            }
-                            .padding(start = 20.dp),
+                            },
 
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),   // 🔥 stile card
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 20.sp,
+                            color = Color(0xFF0D47A1)
+                        ),
                         colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.Transparent,
-                            focusedIndicatorColor = Color(0xFF64B5F6),
-                            unfocusedIndicatorColor = Color(0xFF90CAF9),
+                            backgroundColor = Color(0xFFE3F2FD),          // 🔥 sfondo card
+                            focusedIndicatorColor = Color.Transparent,     // 🔥 niente underline
+                            unfocusedIndicatorColor = Color.Transparent,   // 🔥 niente underline
                             cursorColor = Color(0xFF0D47A1),
                             focusedLabelColor = Color(0xFF0D47A1),
                             unfocusedLabelColor = Color.Gray
-                        ),
-                        singleLine = true
+                        )
                     )
 
                     Row(
@@ -1007,78 +1088,99 @@ fun Activity1Screen(
                         modifier = Modifier.padding(start = 20.dp)
                     ) {
 
-                        // ICONA AGGIUNGI MATERIALE
-                        val quantitaDouble = quantita.toDoubleOrNull()
+                        // ICONA AGGIUNGI MATERIALE — versione moderna in Card
+                        Card(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .width(70.dp)
+                                .clickable {
+                                    val q = quantita.toDoubleOrNull()
 
-                        IconButton(
-                            onClick = {
-                                if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                                    materialiUsati =
-                                        mergeMateriali(materialiUsati + (selectedMateriale!! to quantitaDouble))
+                                    if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
+                                        materialiUsati = mergeMateriali(materialiUsati + (selectedMateriale!! to q))
 
-                                    quantita = ""
-                                    selectedMateriale = null   // 🔥 reset selezione tabella
-                                } else {
-                                    alertMessage =
-                                        "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
-                                    showAlert = true
-                                }
-                            }
+                                        quantita = ""
+                                        selectedMateriale = null
+                                    } else {
+                                        alertMessage = "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                        showAlert = true
+                                    }
+                                },
+                            elevation = 6.dp
                         ) {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-
-                                Icon(
-                                    modifier = Modifier.padding(top = 15.dp),
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Aggiungi materiale",
-                                    tint = Color(0xFF64B5F6)   // blu scuro elegante
-
-                                )
-
-                                Spacer(modifier = Modifier.height(2.dp))
-
-                                Text(
-                                    "Aggiungi Materiale",
-                                    fontSize = 10.sp,
-                                    color = Color(0xFF64B5F6)
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.width(10.dp))
-
-                        // ICONA ANNULLA SELEZIONE TABELLA MATERIALE
-                        IconButton(
-                            onClick = {
-                                selectedMateriale = null
-                                quantita = ""
-                            }
-                        ) {
-                            Column(
+                                modifier = Modifier
+                                    .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
+                                    .padding(8.dp)
+                                    .fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
 
                                 Icon(
-                                    modifier = Modifier.padding(top = 15.dp),
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Ann. Sel.",
-                                    tint = Color(0xFF0D47A1)   // azzurro medio
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Aggiungi materiale",
+                                    tint = Color(0xFF0D47A1),         // blu scuro elegante
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .padding(bottom = 8.dp)      // padding icona richiesto
                                 )
 
                                 Text(
-                                    "Ann. Selezione",
+                                    "Aggiungi\nMateriale",
                                     fontSize = 10.sp,
-                                    color = Color(0xFF0D47A1)
+                                    color = Color(0xFF0D47A1),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
+
+                        // ICONA ANNULLA SELEZIONE TABELLA MATERIALE — versione moderna in Card
+                        Card(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .width(70.dp)
+                                .clickable {
+                                    selectedMateriale = null
+                                    quantita = ""
+                                },
+                            elevation = 6.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
+                                    .padding(8.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Annulla selezione",
+                                    tint = Color(0xFF0D47A1),         // blu scuro elegante
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .padding(bottom = 8.dp)      // padding icona
+                                )
+
+                                Text(
+                                    "Annulla\nSelezione",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF0D47A1),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
                     }
                 }
 
+                Spacer(Modifier.height(15.dp))
+
+                Text("Materiale", fontSize = 16.sp, color = Color.Black)
                 Spacer(Modifier.height(10.dp))
 
                 // BARRA DI RICERCA MATERIALE
@@ -1114,7 +1216,7 @@ fun Activity1Screen(
                     )
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(6.dp))
 
                 // Filtraggio Materiale
                 val materialiFiltrati = listaMateriali.filter {
@@ -1128,7 +1230,7 @@ fun Activity1Screen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight()
-                        .border(1.dp, Color.Gray)
+                        .border(1.dp, Color.LightGray)
                         .padding(horizontal = 2.dp)
                 ) {
                     items(materialiFiltrati) { materiale ->
@@ -1178,49 +1280,49 @@ fun Activity1Screen(
                     .padding(end = 10.dp)
             ) {
 
-                Text("Riepilogo Cliente", fontSize = 18.sp)
-                Spacer(Modifier.height(20.dp))
+                Text("Riepilogo Cliente", fontSize = 16.sp, color = Color.Black)
+                Spacer(Modifier.height(10.dp))
 
                 // Nome CLiente
-                Text("Nome:", fontSize = 14.sp, color = Color.Gray)
+                Text("Nome:", fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = clienteSelezionato?.fullName ?: "—",
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
 
                 // Tipologia Cantiere
-                Text("Tipologia:", fontSize = 14.sp, color = Color.Gray)
+                Text("Tipologia:", fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = clienteSelezionato?.tipologia ?: "—",
-                    fontSize = 16.sp
+                    fontSize = 14.sp
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
 
                 // Totale ORE lavorate
-                Text("Totale Ore Lavorate:", fontSize = 14.sp, color = Color.Gray)
+                Text("Totale Ore Lavorate:", fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = "%.2f".format(totaleOre),
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color(0xFF4CAF50)
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
 
                 // Conteggio ORE
                 val orelavorateValore = DatabaseHelper.getImpostazioni()
                 val tariffaOraria = orelavorateValore.tariffaOraria
 
-                Text("Conteggio Ore:", fontSize = 14.sp, color = Color.Gray)
+                Text("Conteggio Ore:", fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = "%.2f €".format(totaleOre * tariffaOraria),
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color(0xFF4CAF50)
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
 
                 // Conteggio Valore Materiale
                 val rincaroMateriale = DatabaseHelper.getImpostazioni()
@@ -1228,23 +1330,23 @@ fun Activity1Screen(
                   materiale.prezzo * quantita * (1 + rincaroMateriale.rincaroMateriale / 100)
                 }
 
-                Text("Conteggio Materiali:", fontSize = 14.sp, color = Color.Gray)
+                Text("Conteggio Materiali:", fontSize = 12.sp, color = Color.Gray)
 
                 Text(
                     text = "%.2f €".format(totaleMateriali),
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color(0xFF4CAF50)
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
 
                 // Conteggio Totale Ore + Materiale
                 var totaleAssoluto = totaleMateriali + (totaleOre * tariffaOraria)
 
-                Text("Totale:", fontSize = 14.sp, color = Color.Gray)
+                Text("Totale:", fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = "%.2f €".format(totaleAssoluto),
-                    fontSize = 18.sp,
+                    fontSize = 14.sp,
                     color = Color(0xFF4CAF50)
                 )
 
@@ -1260,11 +1362,6 @@ fun Activity1Screen(
                         .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(
-                        "Materiali utilizzati (storico):",
-                        fontSize = 16.sp,
-                        modifier = Modifier.weight(1f)
-                    )
 
                     // ICONA ELIMINA
                     IconButton(
@@ -1317,6 +1414,10 @@ fun Activity1Screen(
                     }
                 }
 
+                Spacer(Modifier.height(10.dp))
+
+                // Testo Materiale Storico
+                Text("Materiale Storico:", fontSize = 16.sp, color = Color.Black)
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
