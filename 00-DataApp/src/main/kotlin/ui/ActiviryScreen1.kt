@@ -918,47 +918,241 @@ fun Activity1Screen(
                     }
                 }
 
-
                     Spacer(Modifier.height(10.dp))
 
-                // -----------------------------------------
-                // MATERIALI DEL NUOVO RAPPORTINO
-                // -----------------------------------------
-                Text(
-                    "Materiali aggiunti ora:",
-                    fontSize = 16.sp)
-
+                Text("Materiale", fontSize = 16.sp)
                 Spacer(Modifier.height(10.dp))
 
+                Spacer(Modifier.height(14.dp))
+
+                // -----------------------------------------
+                // TABELLA MATERIALE
+                // -----------------------------------------
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+
+                    // 🔹 Campo Quantità piccolo e a destra
+                    TextField(
+                        value = quantita,
+                        onValueChange = { quantita = it },
+                        label = { Text("Quantità", modifier = Modifier.padding(bottom = 10.dp)) },
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(70.dp)
+                            .focusRequester(quantitaFocusRequester)
+                            .onKeyEvent { event ->
+
+                                val quantitaDouble = quantita.toDoubleOrNull()
+
+                                if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
+                                    if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
+
+                                        materialiUsati = mergeMateriali(
+                                            materialiUsati + (selectedMateriale!! to quantitaDouble)
+                                        )
+                                        quantita = ""
+                                        selectedMateriale = null
+                                        quantitaFocusRequester.requestFocus()
+
+                                    } else {
+                                        alertMessage =
+                                            "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                        showAlert = true
+                                    }
+                                    true
+                                } else false
+                            },
+
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),   // 🔥 stile card
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 20.sp,
+                            color = Color(0xFF0D47A1)
+                        ),
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = Color(0xFFE3F2FD),          // 🔥 sfondo card
+                            focusedIndicatorColor = Color.Transparent,     // 🔥 niente underline
+                            unfocusedIndicatorColor = Color.Transparent,   // 🔥 niente underline
+                            cursorColor = Color(0xFF0D47A1),
+                            focusedLabelColor = Color(0xFF0D47A1),
+                            unfocusedLabelColor = Color.Gray
+                        )
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),   // 🔥 distanza controllata
+                        modifier = Modifier.padding(start = 20.dp)
+                    ) {
+
+                        // ICONA AGGIUNGI MATERIALE — versione moderna in Card
+                        Card(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .width(70.dp)
+                                .clickable {
+                                    val q = quantita.toDoubleOrNull()
+
+                                    if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
+                                        materialiUsati =
+                                            mergeMateriali(materialiUsati + (selectedMateriale!! to q))
+
+                                        quantita = ""
+                                        selectedMateriale = null
+                                    } else {
+                                        alertMessage =
+                                            "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                        showAlert = true
+                                    }
+                                },
+                            elevation = 6.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
+                                    .padding(8.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Aggiungi materiale",
+                                    tint = Color(0xFF0D47A1),         // blu scuro elegante
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .padding(bottom = 8.dp)      // padding icona richiesto
+                                )
+
+                                Text(
+                                    "Aggiungi\nMateriale",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF0D47A1),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        // ICONA ANNULLA SELEZIONE TABELLA MATERIALE — versione moderna in Card
+                        Card(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .width(70.dp)
+                                .clickable {
+                                    selectedMateriale = null
+                                    quantita = ""
+                                },
+                            elevation = 6.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
+                                    .padding(8.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Annulla selezione",
+                                    tint = Color(0xFF0D47A1),         // blu scuro elegante
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .padding(bottom = 8.dp)      // padding icona
+                                )
+
+                                Text(
+                                    "Annulla\nSelezione",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF0D47A1),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(15.dp))
+
+                // BARRA DI RICERCA MATERIALE
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp)
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .clickable { focusRequester.requestFocus() }
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) {
+                    BasicTextField(
+                        value = searchTextMat,
+                        onValueChange = { searchTextMat = it },
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxSize()               // 🔥 ora il click funziona ovunque
+                            .focusRequester(focusRequester),
+                        decorationBox = { innerTextField ->
+                            if (searchTextMat.isEmpty()) {
+                                Text(
+                                    "Cerca Materiale...",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+
+                Spacer(Modifier.height(6.dp))
+
+                // Filtraggio Materiale
+                val materialiFiltrati = listaMateriali.filter {
+                    it.marca.contains(searchTextMat, ignoreCase = true) ||
+                            it.modello.contains(searchTextMat, ignoreCase = true) ||
+                            it.codice.contains(searchTextMat, ignoreCase = true)
+                }
+
+                // Tabella Materiale
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight()
-                        .height(150.dp)
                         .border(1.dp, Color.LightGray)
+                        .padding(horizontal = 2.dp)
                 ) {
-                    items(materialiUsati) { item ->
-
-                        val (mat, qty) = item
-
+                    items(materialiFiltrati) { materiale ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(2.dp)
+                                .padding(top = 3.dp)
+                                .background(if (selectedMateriale?.id == materiale.id) Color(0xFFE3F2FD) else Color.Transparent)
+                                .border(1.dp, Color.LightGray, RoundedCornerShape(1.dp))
                                 .padding(3.dp)
-                                .border(
-                                    1.dp,
-                                    if (selectedMaterialeUsato == item) Color.Blue else Color.LightGray
-                                )
                                 .clickable {
-                                    selectedMaterialeUsato = item
+                                    selectedMateriale = materiale
+                                    quantitaFocusRequester.requestFocus()
                                 }
-                                .padding(4.dp)
                         ) {
-                            Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
-                            Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
+                            Text(materiale.marca, modifier = Modifier.weight(1f), fontSize = 11.sp)
+                            Text(materiale.modello, modifier = Modifier.weight(1f), fontSize = 11.sp)
+                            Text(materiale.codice, modifier = Modifier.weight(1f), fontSize = 11.sp)
                         }
                     }
                 }
+
+                Spacer(Modifier.height(10.dp))
             }
 
             // -----------------------------------------
@@ -1105,13 +1299,7 @@ fun Activity1Screen(
                 )
             }
 
-            // DIVIDER
-            Divider(
-                color = Color(0xFFE0E0E0),
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-            )
+
 
             /* FINE COLONNA SINISTRA RAPPORTINO */
 
@@ -1131,12 +1319,54 @@ fun Activity1Screen(
                 // -----------------------------------------
                 // PARTE SUPERIORE — VUOTA
                 // -----------------------------------------
+
+                Text(
+                    "Materiali aggiunti ora:",
+                    fontSize = 16.sp
+                )
+
+                Spacer(Modifier.height(10.dp))
+
                 Box(
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxWidth()
                 ) {
-                    // Vuoto (puoi aggiungere contenuti in futuro)
+                    // -----------------------------------------
+                    // MATERIALI DEL NUOVO RAPPORTINO
+                    // -----------------------------------------
+
+                    Spacer(Modifier.height(10.dp))
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .height(150.dp)
+                            .border(1.dp, Color.LightGray)
+                    ) {
+                        items(materialiUsati) { item ->
+
+                            val (mat, qty) = item
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(3.dp)
+                                    .border(
+                                        1.dp,
+                                        if (selectedMaterialeUsato == item) Color.Blue else Color.LightGray
+                                    )
+                                    .clickable {
+                                        selectedMaterialeUsato = item
+                                    }
+                                    .padding(4.dp)
+                            ) {
+                                Text("${mat.marca} ${mat.modello}", modifier = Modifier.weight(1f), fontSize = 12.sp)
+                                Text("x $qty", modifier = Modifier.weight(0.3f), fontSize = 12.sp)
+                            }
+                        }
+                    }
                 }
 
                 // -----------------------------------------
@@ -1148,239 +1378,7 @@ fun Activity1Screen(
                         .fillMaxWidth()
                 ) {
 
-                    Text("Materiale", fontSize = 16.sp)
-                    Spacer(Modifier.height(10.dp))
 
-                    Spacer(Modifier.height(14.dp))
-
-                    // -----------------------------------------
-                    // TABELLA MATERIALE
-                    // -----------------------------------------
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-
-                        // 🔹 Campo Quantità piccolo e a destra
-                        TextField(
-                            value = quantita,
-                            onValueChange = { quantita = it },
-                            label = { Text("Quantità", modifier = Modifier.padding(bottom = 10.dp)) },
-                            modifier = Modifier
-                                .width(150.dp)
-                                .height(70.dp)
-                                .focusRequester(quantitaFocusRequester)
-                                .onKeyEvent { event ->
-
-                                    val quantitaDouble = quantita.toDoubleOrNull()
-
-                                    if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
-                                        if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-
-                                            materialiUsati = mergeMateriali(
-                                                materialiUsati + (selectedMateriale!! to quantitaDouble)
-                                            )
-                                            quantita = ""
-                                            selectedMateriale = null
-                                            quantitaFocusRequester.requestFocus()
-
-                                        } else {
-                                            alertMessage =
-                                                "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
-                                            showAlert = true
-                                        }
-                                        true
-                                    } else false
-                                },
-
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),   // 🔥 stile card
-                            textStyle = LocalTextStyle.current.copy(
-                                fontSize = 20.sp,
-                                color = Color(0xFF0D47A1)
-                            ),
-                            colors = TextFieldDefaults.textFieldColors(
-                                backgroundColor = Color(0xFFE3F2FD),          // 🔥 sfondo card
-                                focusedIndicatorColor = Color.Transparent,     // 🔥 niente underline
-                                unfocusedIndicatorColor = Color.Transparent,   // 🔥 niente underline
-                                cursorColor = Color(0xFF0D47A1),
-                                focusedLabelColor = Color(0xFF0D47A1),
-                                unfocusedLabelColor = Color.Gray
-                            )
-                        )
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),   // 🔥 distanza controllata
-                            modifier = Modifier.padding(start = 20.dp)
-                        ) {
-
-                            // ICONA AGGIUNGI MATERIALE — versione moderna in Card
-                            Card(
-                                modifier = Modifier
-                                    .padding(2.dp)
-                                    .width(70.dp)
-                                    .clickable {
-                                        val q = quantita.toDoubleOrNull()
-
-                                        if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
-                                            materialiUsati =
-                                                mergeMateriali(materialiUsati + (selectedMateriale!! to q))
-
-                                            quantita = ""
-                                            selectedMateriale = null
-                                        } else {
-                                            alertMessage =
-                                                "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
-                                            showAlert = true
-                                        }
-                                    },
-                                elevation = 6.dp
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
-                                        .padding(8.dp)
-                                        .fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Aggiungi materiale",
-                                        tint = Color(0xFF0D47A1),         // blu scuro elegante
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .padding(bottom = 8.dp)      // padding icona richiesto
-                                    )
-
-                                    Text(
-                                        "Aggiungi\nMateriale",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF0D47A1),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-
-                            // ICONA ANNULLA SELEZIONE TABELLA MATERIALE — versione moderna in Card
-                            Card(
-                                modifier = Modifier
-                                    .padding(2.dp)
-                                    .width(70.dp)
-                                    .clickable {
-                                        selectedMateriale = null
-                                        quantita = ""
-                                    },
-                                elevation = 6.dp
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .background(Color(0xFFE3F2FD))   // azzurro chiarissimo come le altre card
-                                        .padding(8.dp)
-                                        .fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Annulla selezione",
-                                        tint = Color(0xFF0D47A1),         // blu scuro elegante
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .padding(bottom = 8.dp)      // padding icona
-                                    )
-
-                                    Text(
-                                        "Annulla\nSelezione",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF0D47A1),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(15.dp))
-
-                    // BARRA DI RICERCA MATERIALE
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(30.dp)
-                            .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
-                            .clickable { focusRequester.requestFocus() }
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        BasicTextField(
-                            value = searchTextMat,
-                            onValueChange = { searchTextMat = it },
-                            singleLine = true,
-                            textStyle = LocalTextStyle.current.copy(
-                                fontSize = 12.sp,
-                                color = Color.Black
-                            ),
-                            modifier = Modifier
-                                .fillMaxSize()               // 🔥 ora il click funziona ovunque
-                                .focusRequester(focusRequester),
-                            decorationBox = { innerTextField ->
-                                if (searchTextMat.isEmpty()) {
-                                    Text(
-                                        "Cerca Materiale...",
-                                        fontSize = 11.sp,
-                                        color = Color.Gray
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        )
-                    }
-
-                    Spacer(Modifier.height(6.dp))
-
-                    // Filtraggio Materiale
-                    val materialiFiltrati = listaMateriali.filter {
-                        it.marca.contains(searchTextMat, ignoreCase = true) ||
-                                it.modello.contains(searchTextMat, ignoreCase = true) ||
-                                it.codice.contains(searchTextMat, ignoreCase = true)
-                    }
-
-                    // Tabella Materiale
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight()
-                            .border(1.dp, Color.LightGray)
-                            .padding(horizontal = 2.dp)
-                    ) {
-                        items(materialiFiltrati) { materiale ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(2.dp)
-                                    .padding(top = 3.dp)
-                                    .background(if (selectedMateriale?.id == materiale.id) Color(0xFFE3F2FD) else Color.Transparent)
-                                    .border(1.dp, Color.LightGray, RoundedCornerShape(1.dp))
-                                    .padding(3.dp)
-                                    .clickable {
-                                        selectedMateriale = materiale
-                                        quantitaFocusRequester.requestFocus()
-                                    }
-                            ) {
-                                Text(materiale.marca, modifier = Modifier.weight(1f), fontSize = 11.sp)
-                                Text(materiale.modello, modifier = Modifier.weight(1f), fontSize = 11.sp)
-                                Text(materiale.codice, modifier = Modifier.weight(1f), fontSize = 11.sp)
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(10.dp))
                 }
             }
 
