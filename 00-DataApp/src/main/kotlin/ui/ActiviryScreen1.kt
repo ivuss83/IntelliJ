@@ -238,8 +238,7 @@ fun Activity1Screen(
             Spacer(Modifier.height(6.dp))
 
             BasicTextField(
-                value = clienteSelezionato?.fullName
-                    ?: "", // Se clienteSelezionato.fullName NON è Null usa quel valore, altrimenti usa la stringa vuota
+                value = clienteSelezionato?.fullName ?: "", // Se clienteSelezionato.fullName NON è Null usa quel valore, altrimenti usa la stringa vuota
                 onValueChange = { },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
