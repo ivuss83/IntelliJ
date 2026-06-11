@@ -955,9 +955,10 @@ fun Activity1Screen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(3.dp)
+                                .background(Color(0xFFE8F5E9))   // 💚 verde chiaro elegante
                                 .border(
                                     1.dp,
-                                    if (selectedMaterialeUsato == item) Color.Blue else Color.LightGray
+                                    if (selectedMaterialeUsato == item) Color.Yellow else Color.LightGray
                                 )
                                 .clickable {
                                     selectedMaterialeUsato = item
