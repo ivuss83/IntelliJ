@@ -3,6 +3,7 @@ package database
 import dataclass.Cliente
 import dataclass.Impostazioni
 import dataclass.Materiale
+import dataclass.MaterialeStorico
 import dataclass.Rapportino
 import java.sql.Connection
 import java.sql.DriverManager
@@ -249,35 +250,27 @@ object DatabaseHelper {
     }
 
     // Delete Materiale già inserito nel Rapportino - STORICO
-    fun deleteMaterialeDaRapportino(materialeId: Int, rapportinoId: Int) {
-        println(">>> Tentativo di DELETE: materialeId=$materialeId, rapportinoId=$rapportinoId")
+    fun deleteMaterialeDaRapportino(idRiga: Int) {
         connect().use { conn ->
             conn.autoCommit = false
             try {
                 conn.prepareStatement("""
                 DELETE FROM RapportinoMateriale
-                WHERE materialeId = ?
-                AND rapportinoId = ?
-                
+                WHERE id = ?
             """).use { stmt ->
-                    stmt.setInt(1, materialeId)
-                    stmt.setInt(2, rapportinoId)
-                    var rows = stmt.executeUpdate()
-
-                    println(">>> Righe eliminate: $rows")
+                    stmt.setInt(1, idRiga)
+                    stmt.executeUpdate()
                 }
-
                 conn.commit()
             } catch (e: Exception) {
                 conn.rollback()
-                println(">>> ERRORE DELETE: ${e.message}")
                 throw e
             }
         }
     }
 
     /// Update quantità materiale dopo eliminazione - STORICO
-    fun updateQuantitaMaterialeNelRapportino(idRiga: Int, nuovaQuantita: Double) {
+    fun updateQuantitaMateriale(idRiga: Int, nuovaQuantita: Double) {
         connect().use { conn ->
             conn.autoCommit = false
             try {
@@ -353,18 +346,24 @@ object DatabaseHelper {
     }
 
     // Select Materiale utilizzato nei Rapportini del Cliente
-    fun getMaterialiUsatiDaCliente(clienteId: Int): List<Pair<Materiale, Double>> {
-        val result = mutableListOf<Pair<Materiale, Double>>()
+    fun getMaterialiUsatiDaCliente(clienteId: Int): List<MaterialeStorico> {
+        val result = mutableListOf<MaterialeStorico>()
 
         val sql = """
-        SELECT m.*,
-         SUM(rm.quantita) AS totaleQuantita,
-         SUM(rm.quantita * m.prezzo) AS valoreTotale
+        SELECT 
+            rm.id AS idRiga,
+            rm.rapportinoId AS idRapportino,
+            m.id AS materialeId,
+            m.marca,
+            m.modello,
+            m.codice,
+            m.prezzo,
+            rm.quantita
         FROM RapportinoMateriale rm
         JOIN Materiale m ON m.id = rm.materialeId
         JOIN Rapportino r ON r.id = rm.rapportinoId
         WHERE r.clienteId = ?
-        GROUP BY m.id
+        ORDER BY rm.rapportinoId, rm.id
     """.trimIndent()
 
         connect().use { conn ->
@@ -372,15 +371,27 @@ object DatabaseHelper {
                 stmt.setInt(1, clienteId)
                 val rs = stmt.executeQuery()
                 while (rs.next()) {
+
                     val materiale = Materiale(
-                        id = rs.getInt("id"),
+                        id = rs.getInt("materialeId"),
                         marca = rs.getString("marca"),
                         modello = rs.getString("modello"),
                         codice = rs.getString("codice"),
                         prezzo = rs.getDouble("prezzo")
                     )
-                    val quantita = rs.getDouble("totaleQuantita")
-                    result.add(materiale to quantita)
+
+                    val idRiga = rs.getInt("idRiga")
+                    val idRapportino = rs.getInt("idRapportino")
+                    val quantita = rs.getDouble("quantita")
+
+                    result.add(
+                        MaterialeStorico(
+                            idRiga = idRiga,
+                            idRapportino = idRapportino,
+                            materiale = materiale,
+                            quantita = quantita
+                        )
+                    )
                 }
             }
         }
@@ -388,39 +399,60 @@ object DatabaseHelper {
         return result
     }
 
+
+
     // Select Materiale Utilizzato nel SINGOLO Rapportino
-    fun getMaterialiUsatiNelRapportino(rapportinoId: Int): List<Pair<Materiale, Double>> {
-        val result = mutableListOf<Pair<Materiale, Double>>()
+    fun getMaterialiUsatiNelRapportino(rapportinoId: Int): List<MaterialeStorico> {
+        val result = mutableListOf<MaterialeStorico>()
 
         val sql = """
-        SELECT m.*,
-               rm.quantita AS totaleQuantita,
-               (rm.quantita * m.prezzo) AS valoreTotale
+        SELECT 
+            rm.id AS idRiga,
+            rm.rapportinoId AS idRapportino,
+            m.id AS materialeId,
+            m.marca,
+            m.modello,
+            m.codice,
+            m.prezzo,
+            rm.quantita
         FROM RapportinoMateriale rm
         JOIN Materiale m ON m.id = rm.materialeId
         WHERE rm.rapportinoId = ?
-    """.trimIndent()
+    """
 
         connect().use { conn ->
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, rapportinoId)
                 val rs = stmt.executeQuery()
                 while (rs.next()) {
+
                     val materiale = Materiale(
-                        id = rs.getInt("id"),
+                        id = rs.getInt("materialeId"),
                         marca = rs.getString("marca"),
                         modello = rs.getString("modello"),
                         codice = rs.getString("codice"),
                         prezzo = rs.getDouble("prezzo")
                     )
-                    val quantita = rs.getDouble("totaleQuantita")
-                    result.add(materiale to quantita)
+
+                    val idRiga = rs.getInt("idRiga")
+                    val idRapportino = rs.getInt("idRapportino")
+                    val quantita = rs.getDouble("quantita")
+
+                    result.add(
+                        MaterialeStorico(
+                            idRiga = idRiga,
+                            idRapportino = idRapportino,
+                            materiale = materiale,
+                            quantita = quantita
+                        )
+                    )
                 }
             }
         }
 
         return result
     }
+
 
     // Costo totale MAteriali nel Rapportino
     fun getTotaleMaterialiRapportino(rapportinoId: Int): Double {

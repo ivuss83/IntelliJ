@@ -12,6 +12,7 @@ import com.lowagie.text.pdf.PdfWriter
 import database.DatabaseHelper
 import dataclass.Cliente
 import dataclass.Materiale
+import dataclass.MaterialeStorico
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
@@ -21,7 +22,7 @@ fun generaPdf(
     cliente: Cliente,
     totaleOre: Double,
     tariffaOraria: Double,
-    materialiRiepilogo: List<Pair<Materiale, Double>>
+    materialiRiepilogo: List<MaterialeStorico>
 ) {
     // --- 1) FILE DIALOG PRIMA DI TUTTO ---
     val fileDialog = FileDialog(null as Frame?, "Salva PDF", FileDialog.SAVE)
@@ -112,11 +113,15 @@ fun generaPdf(
     var totaleMateriali = 0.0
     val rincaroMateriale = DatabaseHelper.getImpostazioni()
 
-    materialiRiepilogo.forEach { (materiale, quantita) ->
+    materialiRiepilogo.forEach { storico ->
+        val materiale = storico.materiale
+        val quantita = storico.quantita
+
         val totale = materiale.prezzo * quantita * (1 + rincaroMateriale.rincaroMateriale / 100)
         totaleMateriali += totale
 
         tabMat.addCell("${materiale.marca} ${materiale.modello}")
+
         tabMat.addCell(
             PdfPCell(Paragraph("%.2f".format(quantita))).apply {
                 horizontalAlignment = Element.ALIGN_RIGHT
@@ -129,6 +134,7 @@ fun generaPdf(
             }
         )
     }
+
 
     // --- RIGA TOTALE MATERIALI (DENTRO LA TABELLA) --- //
     val cellTotLabel = PdfPCell(Paragraph("Totale materiali:", Font(Font.HELVETICA, 13f, Font.BOLD)))

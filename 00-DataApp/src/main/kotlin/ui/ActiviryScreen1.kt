@@ -84,6 +84,7 @@ import database.DatabaseHelper
 import dataclass.Cliente
 import dataclass.Impostazioni
 import dataclass.Materiale
+import dataclass.MaterialeStorico
 import dataclass.Rapportino
 import printdata.generaPdf
 
@@ -113,7 +114,7 @@ fun Activity1Screen(
     var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
 
     var selectedMaterialeUsato by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
-    var selectedStorico by remember { mutableStateOf<Pair<Materiale, Double>?>(null) }
+    var selectedStorico by remember { mutableStateOf<MaterialeStorico?>(null) }
     var idRapportinoCorrente by remember { mutableStateOf(0) }
 
     var listaMateriali by remember { mutableStateOf(DatabaseHelper.getAllMateriale()) }
@@ -129,7 +130,8 @@ fun Activity1Screen(
 
 
     // Materiali già usati dal cliente (storico)
-    var materialiRiepilogo by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
+    var materialiRiepilogo by remember { mutableStateOf<List<MaterialeStorico>>(emptyList()) }
+
 
     // Materiali del nuovo rapportino
     var materialiUsati by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
@@ -330,7 +332,7 @@ fun Activity1Screen(
                         .clickable {
                             showClientiDialog = true
                             clienteSelezionatoTemp = null
-                                   },
+                        },
                     elevation = 6.dp
                 ) {
                     Column(
@@ -859,45 +861,93 @@ fun Activity1Screen(
 
                 // Alert Dialog per eliminazione Materiale STORICO dal Rapportino
                 if (showDeleteMaterialConfirm) {
+
+                    // 🔵 Focus Requester per mettere il cursore nel TextField
+                    val focusRequester = remember { FocusRequester() }
+
                     AlertDialog(
                         onDismissRequest = { showDeleteMaterialConfirm = false },
-                        title = { Text("Conferma eliminazione") },
-                        text = { Text("Sei sicuro di voler eliminare questo materiale dal rapportino?") },
+                        title = {
+                            Text("Elimina materiale", color = Color(0xFF1976D2))
+                        },
+                        text = {
+                            Column {
+
+                                Text(
+                                    "Quanti pezzi vuoi eliminare?",
+                                    color = Color(0xFF1976D2)
+                                )
+
+                                OutlinedTextField(
+                                    value = quantitaDaEliminare,
+                                    onValueChange = { quantitaDaEliminare = it },
+                                    label = { Text("Quantità", color = Color(0xFF1976D2)) },
+                                    singleLine = true,
+                                    modifier = Modifier.focusRequester(focusRequester),
+                                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                                        focusedBorderColor = Color(0xFF1976D2),
+                                        unfocusedBorderColor = Color(0xFF1976D2),
+                                        cursorColor = Color(0xFF1976D2),
+                                        focusedLabelColor = Color(0xFF1976D2),
+                                        unfocusedLabelColor = Color(0xFF1976D2),
+                                        textColor = Color.Black
+                                    )
+                                )
+
+                                // 🔥 Appena il dialogo appare → focus automatico
+                                LaunchedEffect(Unit) {
+                                    focusRequester.requestFocus()
+                                }
+                            }
+                        },
                         confirmButton = {
                             Button(
                                 onClick = {
                                     try {
-                                        selectedStorico?.let { (mat, _) ->
+                                        selectedStorico?.let { storico ->
 
-                                            // 🔥 Elimina SOLO dal rapportino corrente
-                                            DatabaseHelper.deleteMaterialeDaRapportino(
-                                                mat.id!!,
-                                                idRapportinoCorrente
+                                            val qtyToRemove = quantitaDaEliminare.toDoubleOrNull() ?: 0.0
+
+                                            if (qtyToRemove <= 0) {
+                                                alertMessage = "Quantità non valida"
+                                                showAlert = true
+                                                return@let
+                                            }
+
+                                            if (qtyToRemove > storico.quantita) {
+                                                alertMessage = "Non puoi eliminare più della quantità presente"
+                                                showAlert = true
+                                                return@let
+                                            }
+
+                                            if (storico.quantita - qtyToRemove > 0) {
+                                                DatabaseHelper.updateQuantitaMateriale(
+                                                    storico.idRiga,
+                                                    storico.quantita - qtyToRemove
+                                                )
+                                            } else {
+                                                DatabaseHelper.deleteMaterialeDaRapportino(storico.idRiga)
+                                            }
+
+                                            materialiRiepilogo = DatabaseHelper.getMaterialiUsatiDaCliente(
+                                                clienteSelezionato!!.id
                                             )
 
-                                            // Aggiorna lista materiali del rapportino
-                                            materialiRiepilogo = DatabaseHelper.getMaterialiUsatiNelRapportino(
-                                                idRapportinoCorrente
-                                            )
-
-                                            // Reset selezione
-                                            totaleOre = 0.0
+                                            quantitaDaEliminare = ""
                                             selectedStorico = null
-                                            idRapportinoCorrente = 0
-                                            alertMessage = "Materiale rimosso dal rapportino!"
+                                            alertMessage = "Materiale aggiornato!"
                                             showAlert = true
                                         }
 
                                         showDeleteMaterialConfirm = false
 
                                     } catch (e: Exception) {
-                                        alertMessage = "Errore nella cancellazione materiale: ${e.message}"
+                                        alertMessage = "Errore: ${e.message}"
                                         showAlert = true
                                     }
-
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF1976D2),   // blu deciso
+                                    Color(0xFF1976D2),
                                     contentColor = Color.White
                                 )
                             ) {
@@ -917,16 +967,9 @@ fun Activity1Screen(
                         }
                     )
                 }
+
             }
-
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                "Materiali aggiunti ora:",
-                fontSize = 16.sp
-            )
-
-            Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
 
             // -----------------------------------------
@@ -1163,9 +1206,13 @@ fun Activity1Screen(
 
                             if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
                                 if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                                    materialiUsati = mergeMateriali(
-                                        materialiUsati + (selectedMateriale!! to quantitaDouble)
-                                    )
+                                    if (materialiUsati.any { it.first.id == selectedMateriale!!.id }) {
+                                        alertMessage = "Materiale già aggiunto! Elimina la riga e reinserisci la quantità corretta."
+                                        showAlert = true
+                                    } else {
+                                        materialiUsati = materialiUsati + (selectedMateriale!! to quantitaDouble)
+                                    }
+
                                     quantita = ""
                                     selectedMateriale = null
                                     quantitaFocusRequester.requestFocus()
@@ -1213,8 +1260,13 @@ fun Activity1Screen(
                             {
                                 val q = quantita.toDoubleOrNull()
                                 if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
-                                    materialiUsati =
-                                        mergeMateriali(materialiUsati + (selectedMateriale!! to q))
+                                    if (materialiUsati.any { it.first.id == selectedMateriale!!.id }) {
+                                        alertMessage = "Materiale già aggiunto! Elimina la riga e reinserisci la quantità corretta."
+                                        showAlert = true
+                                    } else {
+                                        materialiUsati = materialiUsati + (selectedMateriale!! to q)
+                                    }
+
                                     quantita = ""
                                     selectedMateriale = null
                                 } else {
@@ -1448,7 +1500,10 @@ fun Activity1Screen(
 
                     Spacer(Modifier.height(6.dp))
 
-                    val totaleMateriali = materialiRiepilogo.sumOf { (materiale, quantita) ->
+                    val totaleMateriali = materialiRiepilogo.sumOf { storico ->
+                        val materiale = storico.materiale
+                        val quantita = storico.quantita
+
                         materiale.prezzo * quantita * (1 + rincaro / 100)
                     }
 
@@ -1540,7 +1595,6 @@ fun Activity1Screen(
                         .width(70.dp)
                         .clickable(enabled = selectedStorico != null) {
                             selectedStorico = null
-                            idRapportinoCorrente = 0
                         },
                     elevation = 6.dp
                 ) {
@@ -1598,20 +1652,21 @@ fun Activity1Screen(
                     .height(150.dp)
                     .border(1.dp, Color.LightGray)
             ) {
-                items(materialiRiepilogo) { item ->
-                    val (mat, qty) = item
+                items(materialiRiepilogo) { storico ->
+                    val mat = storico.materiale
+                    val qty = storico.quantita
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (selectedStorico == item) Color(0xFFE3F2FD)
+                                if (selectedStorico == storico) Color(0xFFE3F2FD)
                                 else Color.Transparent
                             )
                             .clickable {
-                                selectedStorico = item
-                                val rappId = DatabaseHelper.getRapportinoIdDaMateriale(mat.id!!)
-                                if (rappId != null) idRapportinoCorrente = rappId
+                                selectedStorico = storico
+                                idRapportinoCorrente = storico.idRapportino
+
                             }
                             .padding(3.dp)
                     ) {
@@ -1626,17 +1681,5 @@ fun Activity1Screen(
     } // chiusura ROW
 } // chiusura Activity
 
-
-
-// Funzione per evitare dopppioni nella tabella "Materiali aggiunti ora"
-fun mergeMateriali(lista: List<Pair<Materiale, Double>>): List<Pair<Materiale, Double>> {
-    return lista
-        .groupBy { it.first.id }   // raggruppa per ID materiale per unificare i materiali uguali basati sull'ID
-        .map { (_, items) -> // items è la lista di coppie che hanno lo stesso materiale
-            val materiale = items.first().first // Prende il materiale dal primo elemento del gruppo (stesso ID)
-            val quantitaTotale = items.sumOf { it.second } // Somma le quantità dello stesso gruppo
-            materiale to quantitaTotale // Ricrea una nuova coppia
-        }
-}
 
 
