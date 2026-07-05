@@ -7,6 +7,7 @@ import dataclass.MaterialeStorico
 import dataclass.Rapportino
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.SQLException
 
 object DatabaseHelper {
 
@@ -162,11 +163,11 @@ object DatabaseHelper {
     fun createMaterialeTableIfNeeded() {
         val sql = """
             CREATE TABLE IF NOT EXISTS Materiale (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            marca TEXT,
-            modello TEXT,
-            codice TEXT,
-            prezzo Real
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+    marca TEXT NOT NULL,
+    modello TEXT NOT NULL,
+    codice TEXT NOT NULL UNIQUE,
+    prezzo REAL NOT NULL
 );
         """.trimIndent()
 
@@ -188,6 +189,47 @@ object DatabaseHelper {
                 pstmt.setString(3, codice)
                 pstmt.setDouble(4, prezzo)
                 pstmt.executeUpdate()
+            }
+        }
+    }
+
+    fun insertMaterialeManuale(
+        marca: String,
+        modello: String,
+        codice: String,
+        prezzo: Double
+    ): Int {
+
+        val sql = """
+        INSERT INTO Materiale (marca, modello, codice, prezzo)
+        VALUES (?, ?, ?, ?)
+    """
+
+        connect().use { conn ->
+
+            try {
+                // 🔵 Inserimento
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, marca)
+                    stmt.setString(2, modello)
+                    stmt.setString(3, codice)
+                    stmt.setDouble(4, prezzo)
+                    stmt.executeUpdate()
+                }
+            } catch (e: SQLException) {
+
+                // ❗ Errore UNIQUE → materiale già presente nel DB
+                if (e.message?.contains("UNIQUE") == true) {
+                    throw Exception("Materiale già presente nel magazzino!")
+                } else {
+                    throw e
+                }
+            }
+
+            // 🔵 Recupero ID dell’ultimo inserimento
+            conn.createStatement().use { stmt ->
+                val rs = stmt.executeQuery("SELECT last_insert_rowid() AS id")
+                return if (rs.next()) rs.getInt("id") else -1
             }
         }
     }

@@ -48,6 +48,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
@@ -136,6 +137,19 @@ fun Activity1Screen(
     // Materiali del nuovo rapportino
     var materialiUsati by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
 
+    // Inserimento Manuale Materiale
+    var marcaManuale by remember { mutableStateOf("") }
+    var modelloManuale by remember { mutableStateOf("") }
+    var codiceManuale by remember { mutableStateOf("") }
+    var prezzoManuale by remember { mutableStateOf("") }
+
+    var materialiMagazzino by remember { mutableStateOf(listOf<Materiale>()) }
+
+    // Dropdownmenu ORE LAVORO
+    var expandedOre by remember { mutableStateOf(false) }
+    val oreDisponibili = listOf("0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "5", "6", "7", "8")
+
+
     LaunchedEffect(Unit) {
         clienti = DatabaseHelper.getAllClienti()
     }
@@ -173,7 +187,7 @@ fun Activity1Screen(
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 14.sp,
-                    color = Color(0xFF0D47A1)   // 🔥 testo visibile
+                    color = Color(0xFF1976D2)   // 🔥 testo visibile
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -202,32 +216,51 @@ fun Activity1Screen(
             Text("Ore Lavoro", fontSize = 12.sp)
             Spacer(Modifier.height(6.dp))
 
-            BasicTextField(
-                value = oreLavoro,
-                onValueChange = { oreLavoro = it },
-                singleLine = true,
-                textStyle = LocalTextStyle.current.copy(
-                    fontSize = 14.sp,
-                    color = Color(0xFF0D47A1)   // 🔥 testo visibile
-                ),
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
                     .padding(horizontal = 6.dp, vertical = 4.dp)
-            ) { innerTextField ->
+                    .clickable { expandedOre = true }
+            ) {
 
-                Box {
-                    // Placeholder
-                    if (oreLavoro.isEmpty()) {
-                        Text(
-                            "",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    // 🔵 Testo o placeholder
+                    Text(
+                        text = if (oreLavoro.isEmpty()) "Ore lavorate" else oreLavoro,
+                        fontSize = 14.sp,
+                        color = if (oreLavoro.isEmpty()) Color.Gray else Color(0xFF1976D2),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // 🔽 Freccia a destra
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // 🔵 Menu a tendina
+                DropdownMenu(
+                    expanded = expandedOre,
+                    onDismissRequest = { expandedOre = false }
+                ) {
+                    oreDisponibili.forEach { valore ->
+                        DropdownMenuItem(
+                            onClick = {
+                                oreLavoro = valore
+                                expandedOre = false
+                            }
+                        ) {
+                            Text(valore)
+                        }
                     }
-
-                    // Testo digitato
-                    innerTextField()
                 }
             }
 
@@ -243,7 +276,7 @@ fun Activity1Screen(
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 14.sp,
-                    color = Color(0xFF0D47A1)   // 🔥 testo visibile
+                    color = Color(0xFF1976D2)   // 🔥 testo visibile
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -279,7 +312,7 @@ fun Activity1Screen(
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 14.sp,
-                    color = Color(0xFF0D47A1)   // 🔥 testo visibile
+                    color = Color(0xFF1976D2)   // 🔥 testo visibile
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1020,10 +1053,10 @@ fun Activity1Screen(
 
         // DIVIDER
         Divider(
-            color = Color(0xFFE0E0E0),
+            color = Color(0xFFE8F5E9),
             modifier = Modifier
                 .fillMaxHeight()
-                .width(2.dp)
+                .width(10.dp)
         )
 
         // -----------------------------------------
@@ -1038,6 +1071,7 @@ fun Activity1Screen(
                         it.tipologia.contains(searchDialogText, ignoreCase = true)
             }
 
+             // Alert Dialog per selezione CLIENTE
             AlertDialog(
                 onDismissRequest = { showClientiDialog = false },
                 title = { Text("Seleziona Cliente", fontSize = 16.sp) },
@@ -1253,25 +1287,93 @@ fun Activity1Screen(
                         modifier = Modifier
                             .padding(2.dp)
                             .width(70.dp)
-                            .clickable (
-                                enabled = clienteSelezionato != null,
-                            )
+                            .clickable(enabled = clienteSelezionato != null) {
 
-                            {
                                 val q = quantita.toDoubleOrNull()
+
+                                // 🔵 CASO 1 — MATERIALE DA MAGAZZINO
                                 if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
-                                    if (materialiUsati.any { it.first.id == selectedMateriale!!.id }) {
-                                        alertMessage = "Materiale già aggiunto! Elimina la riga e reinserisci la quantità corretta."
+
+                                    // ❗ controllo duplicato nella lista materiali usati
+                                    if (materialiUsati.any { it.first.codice == selectedMateriale!!.codice }) {
+                                        alertMessage = "Materiale già presente nel rapportino!"
                                         showAlert = true
-                                    } else {
-                                        materialiUsati = materialiUsati + (selectedMateriale!! to q)
+                                        return@clickable
                                     }
+
+                                    materialiUsati = materialiUsati + (selectedMateriale!! to q)
 
                                     quantita = ""
                                     selectedMateriale = null
+                                    return@clickable
+                                }
+
+                                // 🔵 CASO 2 — MATERIALE MANUALE
+                                val prezzoDouble = prezzoManuale.toDoubleOrNull()
+
+                                if (
+                                    marcaManuale.isNotBlank() &&
+                                    modelloManuale.isNotBlank() &&
+                                    codiceManuale.isNotBlank() &&
+                                    prezzoDouble != null &&
+                                    quantita.isNotBlank() &&
+                                    q != null
+                                ) {
+
+                                    // ❗ controllo duplicato nel magazzino
+                                    if (materialiMagazzino.any { it.codice == codiceManuale }) {
+                                        alertMessage = "Materiale già presente nel magazzino!"
+                                        showAlert = true
+                                        return@clickable
+                                    }
+
+                                    // ❗ controllo duplicato nella lista materiali usati
+                                    if (materialiUsati.any { it.first.codice == codiceManuale }) {
+                                        alertMessage = "Materiale già presente nel rapportino!"
+                                        showAlert = true
+                                        return@clickable
+                                    }
+
+                                    // 🔥 Inserimento nel DB con gestione errori
+                                    val nuovoId = try {
+                                        DatabaseHelper.insertMaterialeManuale(
+                                            marcaManuale,
+                                            modelloManuale,
+                                            codiceManuale,
+                                            prezzoDouble
+                                        )
+                                    } catch (e: Exception) {
+                                        alertMessage = e.message ?: "Errore inserimento materiale"
+                                        showAlert = true
+                                        return@clickable
+                                    }
+
+                                    // 🔄 Aggiorno il magazzino in tempo reale
+                                    materialiMagazzino = DatabaseHelper.getAllMateriale()
+
+                                    // 🔥 Creo oggetto materiale manuale con ID reale
+                                    val materialeManualeObj = Materiale(
+                                        id = nuovoId,
+                                        marca = marcaManuale,
+                                        modello = modelloManuale,
+                                        codice = codiceManuale,
+                                        prezzo = prezzoDouble
+                                    )
+
+                                    materialiUsati = materialiUsati + (materialeManualeObj to q)
+
+                                    // Reset campi manuali
+                                    marcaManuale = ""
+                                    modelloManuale = ""
+                                    codiceManuale = ""
+                                    prezzoManuale = ""
+                                    quantita = ""
+
+                                    alertMessage = "Materiale manuale aggiunto!"
+                                    showAlert = true
+
                                 } else {
-                                    alertMessage =
-                                        "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
+                                    alertMessage = "Seleziona un materiale dal magazzino oppure compila tutti i campi del materiale manuale!\nVerifica la Quantità!"
                                     showAlert = true
                                 }
                             },
@@ -1281,9 +1383,9 @@ fun Activity1Screen(
                             modifier = Modifier
                                 .background(
                                     if (clienteSelezionato != null)
-                                        Color(0xFFE3F2FD)              // blu chiarissimo attivo
+                                        Color(0xFFE3F2FD)
                                     else
-                                        Color.LightGray.copy(alpha = 0.2f) // disattivo
+                                        Color.LightGray.copy(alpha = 0.2f)
                                 )
                                 .padding(8.dp)
                                 .fillMaxWidth(),
@@ -1295,12 +1397,12 @@ fun Activity1Screen(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Aggiungi materiale",
                                 tint = if (clienteSelezionato != null)
-                                    Color(0xFF0D47A1)         // blu scuro elegante
-                                            else
-                                    Color.LightGray.copy(alpha = 0.2f), // disattivo
+                                    Color(0xFF0D47A1)
+                                else
+                                    Color.LightGray.copy(alpha = 0.2f),
                                 modifier = Modifier
                                     .size(28.dp)
-                                    .padding(bottom = 8.dp)      // padding icona richiesto
+                                    .padding(bottom = 8.dp)
                             )
 
                             Text(
@@ -1323,6 +1425,12 @@ fun Activity1Screen(
                             .clickable {
                                 selectedMateriale = null
                                 quantita = ""
+                                marcaManuale = ""
+                                modelloManuale = ""
+                                codiceManuale = ""
+                                prezzoManuale = ""
+                                quantita = ""
+
                             },
                         elevation = 6.dp
                     ) {
@@ -1356,9 +1464,93 @@ fun Activity1Screen(
                 }
             }
 
-            Spacer(Modifier.height(15.dp))
+            Spacer(Modifier.height(8.dp))
+
+            // RIGA INSERIMENTO MANUALE MATERIALE — SENZA CARD
+
+            Text("Inserimento Manuale", fontSize = 16.sp)
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                // MARCA
+                OutlinedTextField(
+                    value = marcaManuale,
+                    onValueChange = { marcaManuale = it },
+                    label = { Text("Marca") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // MODELLO
+                OutlinedTextField(
+                    value = modelloManuale,
+                    onValueChange = { modelloManuale = it },
+                    label = { Text("Modello") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // CODICE
+                OutlinedTextField(
+                    value = codiceManuale,
+                    onValueChange = { codiceManuale = it },
+                    label = { Text("Codice") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // PREZZO
+                OutlinedTextField(
+                    value = prezzoManuale,
+                    onValueChange = { prezzoManuale = it.replace(".", ",") },
+                    label = { Text("Prezzo") },
+                    singleLine = true,
+                    modifier = Modifier.width(100.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             // BARRA DI RICERCA MATERIALE
+
+            Text("Materiale a Magazzino", fontSize = 16.sp)
+            Spacer(Modifier.height(20.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1391,10 +1583,14 @@ fun Activity1Screen(
                 )
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
+
+            LaunchedEffect(Unit) {
+                materialiMagazzino = DatabaseHelper.getAllMateriale()
+            }
 
             // Filtraggio Materiale
-            val materialiFiltrati = listaMateriali.filter {
+            val materialiFiltrati = materialiMagazzino.filter {
                 it.marca.contains(searchTextMat, ignoreCase = true) ||
                         it.modello.contains(searchTextMat, ignoreCase = true) ||
                         it.codice.contains(searchTextMat, ignoreCase = true)
@@ -1432,10 +1628,10 @@ fun Activity1Screen(
 
         // DIVIDER
         Divider(
-            color = Color(0xFFE0E0E0),
+            color = Color(0xFFE8F5E9),
             modifier = Modifier
                 .fillMaxHeight()
-                .width(2.dp)
+                .width(10.dp)
         )
 
 
@@ -1465,12 +1661,12 @@ fun Activity1Screen(
                 Column(modifier = Modifier.weight(1f)) {
 
                     Text("Nome:", fontSize = 16.sp, color = Color.Gray)
-                    Text(clienteSelezionato?.fullName ?: "—", fontSize = 14.sp)
+                    Text(clienteSelezionato?.fullName ?: "—", fontSize = 14.sp, color = Color(0xFF1976D2))
 
                     Spacer(Modifier.height(6.dp))
 
                     Text("Tipologia:", fontSize = 16.sp, color = Color.Gray)
-                    Text(clienteSelezionato?.tipologia ?: "—", fontSize = 14.sp)
+                    Text(clienteSelezionato?.tipologia ?: "—", fontSize = 14.sp, color = Color (0xFF1976D2))
 
                     Spacer(Modifier.height(6.dp))
 
@@ -1478,14 +1674,17 @@ fun Activity1Screen(
                     Text(
                         "%.2f".format(totaleOre),
                         fontSize = 14.sp,
-                        color = Color(0xFF4CAF50)
+                        color = Color(0xFF1976D2)
                     )
                 }
 
                 // ---------------------------
                 // COLONNA DESTRA
                 // ---------------------------
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
 
                     val impostazioni = DatabaseHelper.getImpostazioni()
                     val tariffaOraria = impostazioni.tariffaOraria
@@ -1495,7 +1694,7 @@ fun Activity1Screen(
                     Text(
                         "%.2f €".format(totaleOre * tariffaOraria),
                         fontSize = 14.sp,
-                        color = Color(0xFF4CAF50)
+                        color = Color(0xFF1976D2)
                     )
 
                     Spacer(Modifier.height(6.dp))
@@ -1511,7 +1710,7 @@ fun Activity1Screen(
                     Text(
                         "%.2f €".format(totaleMateriali),
                         fontSize = 14.sp,
-                        color = Color(0xFF4CAF50)
+                        color = Color(0xFF1976D2)
                     )
 
                     Spacer(Modifier.height(6.dp))
@@ -1522,7 +1721,7 @@ fun Activity1Screen(
                     Text(
                         "%.2f €".format(totaleAssoluto),
                         fontSize = 14.sp,
-                        color = Color(0xFF4CAF50)
+                        color = Color(0xFF1976D2)
                     )
                 }
             }

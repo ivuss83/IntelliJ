@@ -136,7 +136,10 @@ fun generaPdf(
     }
 
 
-    // --- RIGA TOTALE MATERIALI (DENTRO LA TABELLA) --- //
+    // --------------------------------------------
+    // RIGA TOTALE MATERIALI (DENTRO LA TABELLA)
+    // --------------------------------------------
+
     val cellTotLabel = PdfPCell(Paragraph("Totale materiali:", Font(Font.HELVETICA, 13f, Font.BOLD)))
     cellTotLabel.colspan = 2
     cellTotLabel.border = Rectangle.TOP
