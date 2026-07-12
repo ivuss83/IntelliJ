@@ -20,7 +20,8 @@ fun main() = application {
 
         onCloseRequest = ::exitApplication,
         state = windowState,
-        title = "Stefano"
+        title = "Stefano",
+
     ) {
         App(windowState)
     }

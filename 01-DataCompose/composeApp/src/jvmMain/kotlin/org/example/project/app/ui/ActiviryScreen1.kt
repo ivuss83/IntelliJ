@@ -158,7 +158,7 @@ fun Activity1Screen(
             .padding(16.dp),
     ) {
 
-        /* COLONNA SINISTRA DATI RAPPORTINO */
+        /* 1 COLONNA */
 
         // -------------------------------- //
         // COLONNA SINISTRA - DATI LAVORO   //
@@ -1202,7 +1202,8 @@ fun Activity1Screen(
             )
         }
 
-        /* FINE COLONNA SINISTRA RAPPORTINO */
+
+        /* 2 COLONNA */
 
         // ------------------------------------------------------ //
         // MATERIALE MAGAZZINO                                    //
@@ -1632,6 +1633,8 @@ fun Activity1Screen(
                 .width(10.dp)
         )
 
+
+        /* 3 COLONNA */
 
         // ----------------------------------------------------------//
         // COLONNA DESTRA: RIEPILOGO CLIENTI (DIVISO IN DUE COLONNE) //
