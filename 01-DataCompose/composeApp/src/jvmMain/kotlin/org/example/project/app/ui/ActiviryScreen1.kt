@@ -1247,7 +1247,88 @@ fun Activity1Screen(
         ) {
 
             Text("Materiale", fontSize = 16.sp)
+
             Spacer(Modifier.height(10.dp))
+
+            // RIGA INSERIMENTO MANUALE MATERIALE — SENZA CARD
+
+            Text("Inserimento Manuale", fontSize = 16.sp)
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                // MARCA
+                OutlinedTextField(
+                    value = marcaManuale,
+                    onValueChange = { marcaManuale = it },
+                    label = { Text("Marca") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // MODELLO
+                OutlinedTextField(
+                    value = modelloManuale,
+                    onValueChange = { modelloManuale = it },
+                    label = { Text("Modello") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // CODICE
+                OutlinedTextField(
+                    value = codiceManuale,
+                    onValueChange = { codiceManuale = it },
+                    label = { Text("Codice") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+
+                // PREZZO
+                OutlinedTextField(
+                    value = prezzoManuale,
+                    onValueChange = { prezzoManuale = it.replace(".", ",") },
+                    label = { Text("Prezzo") },
+                    singleLine = true,
+                    modifier = Modifier.width(100.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF1976D2),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF1976D2),
+                        focusedLabelColor = Color(0xFF1976D2),
+                        unfocusedLabelColor = Color.Gray
+                    )
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier
@@ -1326,7 +1407,7 @@ fun Activity1Screen(
                             .width(70.dp)
                             .clickable(enabled = clienteSelezionato != null) {
 
-                                val q = quantita.toDoubleOrNull()
+                                val q = quantita.replace(",", ".").trim().toDoubleOrNull()
 
                                 // 🔵 CASO 1 — MATERIALE DA MAGAZZINO
                                 if (selectedMateriale != null && quantita.isNotBlank() && q != null) {
@@ -1500,88 +1581,6 @@ fun Activity1Screen(
                     }
                 }
             }
-
-            Spacer(Modifier.height(8.dp))
-
-            // RIGA INSERIMENTO MANUALE MATERIALE — SENZA CARD
-
-            Text("Inserimento Manuale", fontSize = 16.sp)
-            Spacer(Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-
-                // MARCA
-                OutlinedTextField(
-                    value = marcaManuale,
-                    onValueChange = { marcaManuale = it },
-                    label = { Text("Marca") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Color(0xFF1976D2),
-                        focusedLabelColor = Color(0xFF1976D2),
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
-
-                // MODELLO
-                OutlinedTextField(
-                    value = modelloManuale,
-                    onValueChange = { modelloManuale = it },
-                    label = { Text("Modello") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Color(0xFF1976D2),
-                        focusedLabelColor = Color(0xFF1976D2),
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
-
-                // CODICE
-                OutlinedTextField(
-                    value = codiceManuale,
-                    onValueChange = { codiceManuale = it },
-                    label = { Text("Codice") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Color(0xFF1976D2),
-                        focusedLabelColor = Color(0xFF1976D2),
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
-
-                // PREZZO
-                OutlinedTextField(
-                    value = prezzoManuale,
-                    onValueChange = { prezzoManuale = it.replace(".", ",") },
-                    label = { Text("Prezzo") },
-                    singleLine = true,
-                    modifier = Modifier.width(100.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Color(0xFF1976D2),
-                        focusedLabelColor = Color(0xFF1976D2),
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
 
             // BARRA DI RICERCA MATERIALE
 

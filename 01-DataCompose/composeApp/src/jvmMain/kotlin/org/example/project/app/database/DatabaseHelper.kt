@@ -193,6 +193,7 @@ object DatabaseHelper {
         }
     }
 
+    // Insert Manuale Materiale
     fun insertMaterialeManuale(
         marca: String,
         modello: String,
