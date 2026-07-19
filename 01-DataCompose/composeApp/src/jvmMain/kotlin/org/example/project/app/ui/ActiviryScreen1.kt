@@ -147,6 +147,18 @@ fun Activity1Screen(
     var expandedOre by remember { mutableStateOf(false) }
     val oreDisponibili = listOf("0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "5", "6", "7", "8")
 
+    // Dropdown Nome
+    var expandedNome by remember { mutableStateOf(false) }
+    var nomeDropMenu by remember { mutableStateOf("") }
+    val nomiDisponibili = listOf("Stefano")
+
+    // Dropdown Quantità
+    var expandedQuantita by remember { mutableStateOf(false) }
+    var quantitaDropDown by remember { mutableStateOf("") }
+
+    // Puoi popolare questa lista come vuoi
+    val quantitaDisponibili = listOf("1", "2", "3", "4", "5", "10", "20")
+
 
     LaunchedEffect(Unit) {
         clienti = DatabaseHelper.getAllClienti()
@@ -179,32 +191,51 @@ fun Activity1Screen(
             Text("Nome", fontSize = 12.sp)
             Spacer(Modifier.height(6.dp))
 
-            BasicTextField(
-                value = nome,
-                onValueChange = { nome = it },
-                singleLine = true,
-                textStyle = LocalTextStyle.current.copy(
-                    fontSize = 14.sp,
-                    color = Color(0xFF1976D2)   // 🔥 testo visibile
-                ),
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
                     .padding(horizontal = 6.dp, vertical = 4.dp)
-            ) { innerTextField ->
+                    .clickable { expandedNome = true }
+            ) {
 
-                Box {
-                    // Placeholder
-                    if (nome.isEmpty()) {
-                        Text(
-                            "",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    // 🔵 Testo o placeholder
+                    Text(
+                        text = if (nomeDropMenu.isEmpty()) "Seleziona nome" else nomeDropMenu,
+                        fontSize = 14.sp,
+                        color = if (nomeDropMenu.isEmpty()) Color.Gray else Color(0xFF1976D2),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // 🔽 Freccia a destra
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // 🔵 Menu a tendina
+                DropdownMenu(
+                    expanded = expandedNome,
+                    onDismissRequest = { expandedNome = false }
+                ) {
+                    nomiDisponibili.forEach { valore ->
+                        DropdownMenuItem(
+                            onClick = {
+                                nomeDropMenu = valore
+                                expandedNome = false
+                            }
+                        ) {
+                            Text(valore)
+                        }
                     }
-
-                    // Testo digitato
-                    innerTextField()
                 }
             }
 
@@ -402,7 +433,7 @@ fun Activity1Screen(
                         .clickable {
                             try {
                                 if (clienteSelezionato != null &&
-                                    nome.isNotBlank() &&
+                                    nomeDropMenu.isNotBlank() &&
                                     oreLavoro.isNotBlank() &&
                                     oreLavoro.toDoubleOrNull() != null
                                 ) {
@@ -414,7 +445,7 @@ fun Activity1Screen(
 
                                         // Salvo il rapportino
                                         DatabaseHelper.insertRapportino(
-                                            nome = nome,
+                                            nome = nomeDropMenu,
                                             ore = oreLavoro.toDouble(),
                                             clienteId = clienteSelezionato!!.id,
                                             tipologia = clienteSelezionato!!.tipologia
@@ -437,7 +468,7 @@ fun Activity1Screen(
                                         showAlert = true
 
                                         // Reset campi
-                                        nome = ""
+                                        nomeDropMenu = ""
                                         oreLavoro = ""
                                         clienteSelezionato = null
                                         selectedMateriale = null
@@ -1224,56 +1255,63 @@ fun Activity1Screen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
 
-                // 🔹 Campo Quantità piccolo e a destra
-                TextField(
-                    value = quantita,
-                    onValueChange = { quantita = it },
-                    label = { Text("Quantità", modifier = Modifier.padding(bottom = 10.dp)) },
+                // CAMPO QUANTITÀ — VERSIONE DROPDOWN
+
+                Spacer(Modifier.height(6.dp))
+
+                Box(
                     modifier = Modifier
                         .width(150.dp)
                         .height(70.dp)
-                        .focusRequester(quantitaFocusRequester)
-                        .onKeyEvent { event ->
+                        .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))   // 🔥 stesso stile card
+                        .background(Color(0xFFE3F2FD))                         // 🔥 stesso sfondo
+                        .padding(horizontal = 10.dp, vertical = 8.dp)
+                        .clickable { expandedQuantita = true }
+                ) {
 
-                            val quantitaDouble = quantita.toDoubleOrNull()
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                            if (event.type == KeyEventType.KeyUp && event.key == Key.Enter) {
-                                if (selectedMateriale != null && quantita.isNotBlank() && quantitaDouble != null) {
-                                    if (materialiUsati.any { it.first.id == selectedMateriale!!.id }) {
-                                        alertMessage = "Materiale già aggiunto! Elimina la riga e reinserisci la quantità corretta."
-                                        showAlert = true
-                                    } else {
-                                        materialiUsati = materialiUsati + (selectedMateriale!! to quantitaDouble)
-                                    }
+                        // 🔵 Testo o placeholder
+                        Text(
+                            text = if (quantita.isEmpty()) "Quantità" else quantita,
+                            fontSize = 20.sp,
+                            color = if (quantita.isEmpty()) Color.Gray else Color(0xFF0D47A1),
+                            modifier = Modifier.weight(1f)
+                        )
 
-                                    quantita = ""
-                                    selectedMateriale = null
-                                    quantitaFocusRequester.requestFocus()
+                        // 🔽 Freccia
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
 
-                                } else {
-                                    alertMessage =
-                                        "Verifica se hai selezionato materiale da inserire oppure manca la quantità!"
-                                    showAlert = true
+                    // 🔵 MENU A TENDINA
+                    DropdownMenu(
+                        expanded = expandedQuantita,
+                        onDismissRequest = { expandedQuantita = false }
+                    ) {
+                        quantitaDisponibili.forEach { valore ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    quantita = valore
+                                    expandedQuantita = false
                                 }
-                                true
-                            } else false
-                        },
-
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),   // 🔥 stile card
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 20.sp,
-                        color = Color(0xFF0D47A1)
-                    ),
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color(0xFFE3F2FD),          // 🔥 sfondo card
-                        focusedIndicatorColor = Color.Transparent,     // 🔥 niente underline
-                        unfocusedIndicatorColor = Color.Transparent,   // 🔥 niente underline
-                        cursorColor = Color(0xFF0D47A1),
-                        focusedLabelColor = Color(0xFF0D47A1),
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
+                            ) {
+                                Text(
+                                    valore,
+                                    fontSize = 18.sp,
+                                    color = Color(0xFF0D47A1)
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
