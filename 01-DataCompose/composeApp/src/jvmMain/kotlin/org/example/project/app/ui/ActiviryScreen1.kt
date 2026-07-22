@@ -129,10 +129,8 @@ fun Activity1Screen(
     var searchDialogText by remember { mutableStateOf("") }
     val focusRequesterDialog = remember { FocusRequester() }
 
-
     // Materiali già usati dal cliente (storico)
     var materialiRiepilogo by remember { mutableStateOf<List<MaterialeStorico>>(emptyList()) }
-
 
     // Materiali del nuovo rapportino
     var materialiUsati by remember { mutableStateOf(listOf<Pair<Materiale, Double>>()) }
@@ -1234,7 +1232,7 @@ fun Activity1Screen(
         /* 2 COLONNA */
 
         // ------------------------------------------------------ //
-        // MATERIALE MAGAZZINO                                    //
+        // COLONNA CENTRALE: MATERIALE MAGAZZINO                  //
         // ------------------------------------------------------ //
 
         Column(
