@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,6 +86,7 @@ import dataclass.Impostazioni
 import dataclass.Materiale
 import dataclass.MaterialeStorico
 import dataclass.Rapportino
+import org.example.project.app.alertDialog.showDeleteConfirm
 import printdata.generaPdf
 
 @Composable
@@ -430,7 +432,10 @@ fun Activity1Screen(
                     modifier = Modifier
                         .padding(2.dp)
                         .width(70.dp)
-                        .clickable {
+                        .clickable (
+                            enabled = clienteSelezionato != null
+                        )
+                        {
                             try {
                                 if (clienteSelezionato != null &&
                                     nomeDropMenu.isNotBlank() &&
@@ -492,7 +497,12 @@ fun Activity1Screen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier
-                            .background(Color(0xFFE3F2FD)) // sfondo card
+                            .background(
+                                if (clienteSelezionato != null)
+                                    Color(0xFFE3F2FD)          // verde chiaro attivo
+                                else
+                                    Color.LightGray.copy(alpha = 0.2f) // disattivo
+                            )
                             .padding(8.dp)
                     ) {
 
@@ -500,7 +510,10 @@ fun Activity1Screen(
                         Icon(
                             imageVector = Icons.Default.Create,
                             contentDescription = "Salva Rapportino",
-                            tint = Color(0xFF0D47A1),
+                            tint = if (clienteSelezionato != null)
+                                Color(0xFF0D47A1)
+                            else
+                                Color.Gray.copy(alpha = 0.4f),
                             modifier = Modifier.size(28.dp)
                         )
 
@@ -509,7 +522,10 @@ fun Activity1Screen(
                             "Salva\nRapp.",
                             fontSize = 10.sp,
                             textAlign = TextAlign.Center,
-                            color = Color(0xFF0D47A1)
+                            color = if (clienteSelezionato != null)
+                                Color(0xFF1B5E20)
+                            else
+                                Color.Gray.copy(alpha = 0.4f)
                         )
                     }
                 }
@@ -761,56 +777,28 @@ fun Activity1Screen(
                 // ALERT DIALOG
                 // ------------------------------ //
 
-                // Alert Dialog per eliminazione Cliente+Dipendenze
-                if (showDeleteConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text("Conferma eliminazione") },
-                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    try {
-                                        clienteSelezionato?.let {
-                                            DatabaseHelper.deleteClienteConRapportini(it.id)
-                                        }
+                // SHOWDELETECONFIRM
+                showDeleteConfirm().ShowDeleteConfirmDialog(
+                    showDeleteConfirm = showDeleteConfirm,
+                    clienteSelezionato = clienteSelezionato,
 
-                                        showDeleteConfirm = false
-                                        alertMessage = "Cliente e rapportini eliminati!"
-                                        showAlert = true
+                    onDeleteSuccess = {
+                        alertMessage = "Cliente e rapportini eliminati!"
+                        showAlert = true
+                        clienteSelezionato = null
+                    },
 
-                                        // Reset selezione e aggiorna lista
-                                        clienteSelezionato = null
-                                        clienti = DatabaseHelper.getAllClienti()
+                    onDeleteError = { msg ->
+                        alertMessage = msg
+                        showAlert = true
+                    },
 
-                                    } catch (e: Exception) {
-                                        alertMessage = "Errore nella cancellazione dati: ${e.message}"
-                                        showAlert = true
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF1976D2),   // blu deciso
-                                    contentColor = Color.White            // testo bianco
-                                )
-                            )
-                            {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = { showDeleteConfirm = false },
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF1976D2),   // blu deciso
-                                    contentColor = Color.White            // testo bianco
-                                )
+                    onDismiss = { showDeleteConfirm = false },
 
-                            ) {
-                                Text("Annulla")
-                            }
-                        }
-                    )
-                }
+                    updateClienti = {
+                        clienti = DatabaseHelper.getAllClienti()
+                    }
+                )
 
                 // Alert Dialog per eliminazione MAteriale Inserito
                 if (showDeleteMaterialeUsatoConfirm) {
@@ -1042,7 +1030,16 @@ fun Activity1Screen(
                 modifier = Modifier
                     .weight(0.5f)
                     .fillMaxWidth()
+                    .clickable (
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
+
+                    {
+                        selectedMaterialeUsato = null
+                    }
             ) {
+
                 Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
