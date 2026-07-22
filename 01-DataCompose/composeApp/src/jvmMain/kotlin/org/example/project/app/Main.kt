@@ -22,6 +22,7 @@ fun main() = application {
         state = windowState,
         title = "Stefano",
 
+
     ) {
         App(windowState)
     }
