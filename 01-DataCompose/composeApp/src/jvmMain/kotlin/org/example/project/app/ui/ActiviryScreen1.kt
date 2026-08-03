@@ -704,6 +704,7 @@ fun Activity1Screen(
                 }
 
 
+
                 // ICONA ELIMINA MATERIALE INSERITO — versione moderna in Card
                 Card(
                     modifier = Modifier
