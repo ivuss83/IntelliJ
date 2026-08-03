@@ -85,6 +85,7 @@ import dataclass.Impostazioni
 import dataclass.Materiale
 import dataclass.MaterialeStorico
 import dataclass.Rapportino
+import org.example.project.app.alertDialog.showDeleteConfirm
 import printdata.generaPdf
 
 @Composable
@@ -761,56 +762,30 @@ fun Activity1Screen(
                 // ALERT DIALOG
                 // ------------------------------ //
 
-                // Alert Dialog per eliminazione Cliente+Dipendenze
-                if (showDeleteConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text("Conferma eliminazione") },
-                        text = { Text("Sei sicuro di voler eliminare questo cliente e tutti i suoi rapportini?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    try {
-                                        clienteSelezionato?.let {
-                                            DatabaseHelper.deleteClienteConRapportini(it.id)
-                                        }
+                // Classe SHOIWDELETECONFIRM per eliminazione Cliente+Dipendenze
+                showDeleteConfirm().ShowDeleteConfirmDialog(
+                    showDeleteConfirm = showDeleteConfirm,
+                    clienteSelezionato = clienteSelezionato,
+                    onDeleteSuccess = {
+                        showDeleteConfirm = false
+                        alertMessage = "Cliente e rapportini eliminati!"
+                        showAlert = true
 
-                                        showDeleteConfirm = false
-                                        alertMessage = "Cliente e rapportini eliminati!"
-                                        showAlert = true
+                        clienteSelezionato = null
+                        materialiRiepilogo = emptyList()
+                        clienti = DatabaseHelper.getAllClienti()
+                    },
+                    onDeleteError = { msg ->
+                        alertMessage = msg
+                        showAlert = true
+                    },
+                    onDismiss = { showDeleteConfirm = false },
+                    updateClienti = {
+                        clienti = DatabaseHelper.getAllClienti()
+                    }
+                )
 
-                                        // Reset selezione e aggiorna lista
-                                        clienteSelezionato = null
-                                        clienti = DatabaseHelper.getAllClienti()
 
-                                    } catch (e: Exception) {
-                                        alertMessage = "Errore nella cancellazione dati: ${e.message}"
-                                        showAlert = true
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF1976D2),   // blu deciso
-                                    contentColor = Color.White            // testo bianco
-                                )
-                            )
-                            {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = { showDeleteConfirm = false },
-                                colors = ButtonDefaults.buttonColors(
-                                    Color(0xFF1976D2),   // blu deciso
-                                    contentColor = Color.White            // testo bianco
-                                )
-
-                            ) {
-                                Text("Annulla")
-                            }
-                        }
-                    )
-                }
 
                 // Alert Dialog per eliminazione MAteriale Inserito
                 if (showDeleteMaterialeUsatoConfirm) {
@@ -1314,7 +1289,7 @@ fun Activity1Screen(
                 // PREZZO
                 OutlinedTextField(
                     value = prezzoManuale,
-                    onValueChange = { prezzoManuale = it.replace(".", ",") },
+                    onValueChange = { prezzoManuale = it.replace(",", ".") },
                     label = { Text("Prezzo") },
                     singleLine = true,
                     modifier = Modifier.width(100.dp),

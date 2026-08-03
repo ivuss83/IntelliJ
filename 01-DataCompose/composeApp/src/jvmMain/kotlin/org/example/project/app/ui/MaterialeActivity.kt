@@ -16,6 +16,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import database.DatabaseHelper
+import database.DatabaseHelper.deleteMateriale
 import dataclass.Materiale
 
 @Composable
@@ -58,7 +60,10 @@ fun MaterialeActivity(
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
 
+    // --- Delete materiale ---
     var showDeleteMaterialConfirm by remember { mutableStateOf(false) }
+    var showDeleteMaterialSimpleConfirm by remember { mutableStateOf(false) }
+
 
     var materialiUsatoInRapportini by remember { mutableStateOf(0) }
     var nomeClienteMaterialeDaEliminare by remember { mutableStateOf("") }
@@ -308,17 +313,7 @@ fun MaterialeActivity(
 
                                 } else {
                                     // 4️⃣ Eliminazione diretta (nessuna dipendenza)
-                                    DatabaseHelper.deleteMaterialeConDipendenze(selectedMateriale!!.id!!)
-                                    listaMateriali = DatabaseHelper.getAllMateriale()
-
-                                    selectedMateriale = null
-                                    marca = ""
-                                    modello = ""
-                                    codice = ""
-                                    prezzo = ""
-
-                                    alertMessage = "Materiale Eliminato!"
-                                    showAlert = true
+                                    showDeleteMaterialSimpleConfirm = true
                                 }
 
                             } else {
@@ -410,6 +405,7 @@ fun MaterialeActivity(
                     }
                 }
 
+            // Delete del materiale che ha legami con qualche cliente
             if (showDeleteMaterialConfirm) {
                 AlertDialog(
                     onDismissRequest = { showDeleteMaterialConfirm = false },
@@ -488,7 +484,54 @@ fun MaterialeActivity(
                 )
             }
 
-                Spacer(Modifier.height(10.dp))
+            // Delete semplice del materiale che non è legato a nessun cliente
+            if (showDeleteMaterialSimpleConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteMaterialSimpleConfirm = false },
+                    title = { Text("Conferma Eliminazione") },
+                    text = { Text("Sei sicuro di voler eliminare il materiale selezionato?") },
+
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                deleteMateriale(selectedMateriale!!.id!!)
+                                listaMateriali = DatabaseHelper.getAllMateriale()
+
+                                selectedMateriale = null
+                                marca = ""
+                                modello = ""
+                                codice = ""
+                                prezzo = ""
+
+                                showDeleteMaterialSimpleConfirm = false
+                                alertMessage = "Materiale eliminato!"
+                                showAlert = true
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                Color(0xFF1976D2),   // blu deciso
+                                contentColor = Color.White            // testo bianco
+                            )
+
+                        ) {
+                            Text("Elimina")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteMaterialSimpleConfirm = false },
+                            colors = ButtonDefaults.buttonColors(
+                                Color(0xFF1976D2),   // blu deciso
+                                contentColor = Color.White            // testo bianco
+                            )
+
+                        ) {
+                            Text("Annulla")
+                        }
+                    }
+                )
+            }
+
+
+            Spacer(Modifier.height(10.dp))
 
         }
 
